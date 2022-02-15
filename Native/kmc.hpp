@@ -99,6 +99,17 @@ namespace Nano::KMC {
         Simulation(SimulationParams params_, Lattice *lattice, RandomGenerator *randomGenerator)
         : params(std::move(params_)), lattice(lattice), random_generator(randomGenerator) {}
 
+        std::vector<double> get_event_rates() {
+            std::vector<double> rates;
+
+            for(auto& pair : _location_event_map) {
+                auto rate = pair.second.rate;
+                rates.push_back(rate);
+            }
+
+            return rates;
+        }
+
         void step() {
             if(_location_event_map.empty()) {
                 init_events();
@@ -134,7 +145,8 @@ namespace Nano::KMC {
             Events::Dispatch::execute(selected_event.type, *lattice,
                             selected_event.center, selected_event.target);
 
-            update_events(selected_event.center);
+            update_surrounding_events(selected_event.center);
+            update_surrounding_events(selected_event.target);
 
             auto r_2 = uniform_real(random_generator->gen);
             auto delta_t = -std::log(r_2) / k_total;
@@ -158,6 +170,14 @@ namespace Nano::KMC {
             for_all(lattice->size, [&] (IVec3D loc) {
                 update_events(loc);
             });
+        }
+
+        void update_surrounding_events(IVec3D center) {
+            update_events(center);
+
+            for(auto target : nearest(center)) {
+                update_events(target);
+            }
         }
 
         void update_events(IVec3D loc) {

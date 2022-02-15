@@ -1,10 +1,10 @@
 import Nano
-from Python.wrap import VecToMat
+from Python.wrap import int_vec_to_mat, double_vec_to_mat
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits import mplot3d
 
-def plot_point_cloud(image, key, ax):
+def plot_point_cloud(image, key, ax, c, s = 10.0):
     points = []
 
     for i in range(0, image.shape[0]):
@@ -16,15 +16,12 @@ def plot_point_cloud(image, key, ax):
     points = np.array(points)
 
     ax.set_proj_type("persp")
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=1.0)
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=s, color=c)
 
 
-def main():
-
-
-
+def run_metro_test():
     dim = Nano.IVec3D()
-    dim.x = 50; dim.y = 50; dim.z = 50
+    dim.x = 30; dim.y = 30; dim.z = 30
 
     lattice = Nano.Lattice(dim)
     lattice.energy_map.set_uniform_binary(-1.0, 0.0)
@@ -32,12 +29,10 @@ def main():
     gen = Nano.RandomGenerator(123)
     lattice.uniform_init(gen)
 
-
-
     metropolis = Nano.Metropolis(lattice, gen)
     metropolis.step(int(1e6))
 
-    output = VecToMat(lattice.get_types())
+    output = int_vec_to_mat(lattice.get_types())
     grid = output.reshape((dim.x, dim.y, dim.z))
 
 
@@ -48,12 +43,25 @@ def main():
 
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
-    plot_point_cloud(grid, 1, fig.gca())
-    plot_point_cloud(grid, -1, fig.gca())
+    plot_point_cloud(grid, 1, fig.gca(), "red")
+
+    fig2 = plt.figure()
+    ax = fig2.add_subplot(projection='3d')
+    plot_point_cloud(grid, -1, fig2.gca(), "blue")
     plt.show()
 
-    #run_kmc(dim, gen, lattice)
 
+def run_kmc_test():
+    dim = Nano.IVec3D()
+    dim.x = 10; dim.y = 10; dim.z = 10
+
+    lattice = Nano.Lattice(dim)
+    lattice.energy_map.set_uniform_binary(-1.0, 0.0)
+
+    gen = Nano.RandomGenerator(123)
+    lattice.uniform_init(gen)
+
+    run_kmc(dim, gen, lattice)
 
 def run_kmc(dim, gen, lattice):
     sim_params = Nano.SimulationParams()
@@ -62,16 +70,22 @@ def run_kmc(dim, gen, lattice):
     plt.ion()
     fig = plt.gcf()
     ax = fig.add_subplot(projection='3d')
-    for i in range(0, 100):
+    for i in range(0, 1000):
         ax.clear()
 
         sim.step()
 
-        output = VecToMat(lattice.get_types())
+        rates = double_vec_to_mat(sim.get_event_rates())
+        rates_types = np.sort(np.unique(rates))
+
+        x = np.unique(rates, return_counts=True)
+
+
+        output = int_vec_to_mat(lattice.get_types())
         grid = output.reshape((dim.x, dim.y, dim.z))
         # plt.imshow(grid[:,:,0])
 
-        plot_point_cloud(grid, 1, ax)
+        plot_point_cloud(grid, 1, ax, "red", s=100.0)
         # plot_point_cloud(grid, -1, ax)
 
         print(f"{sim.get_time()}")
@@ -83,4 +97,4 @@ def run_kmc(dim, gen, lattice):
 
 
 if __name__ == '__main__':
-    main()
+    run_kmc_test()

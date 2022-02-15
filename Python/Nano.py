@@ -85,22 +85,9 @@ _Nano.IVec3D_swigregister(IVec3D)
 
 def nearest(loc):
     return _Nano.nearest(loc)
-class VecData(object):
-    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
-    __repr__ = _swig_repr
-    ptr = property(_Nano.VecData_ptr_get, _Nano.VecData_ptr_set)
-    size = property(_Nano.VecData_size_get, _Nano.VecData_size_set)
 
-    def __init__(self):
-        _Nano.VecData_swiginit(self, _Nano.new_VecData())
-    __swig_destroy__ = _Nano.delete_VecData
-
-# Register VecData in _Nano:
-_Nano.VecData_swigregister(VecData)
-
-
-def vector_data(target):
-    return _Nano.vector_data(target)
+def vector_data(*args):
+    return _Nano.vector_data(*args)
 class EnergyMap(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -239,6 +226,9 @@ class Simulation(object):
     def __init__(self, params_, lattice, randomGenerator):
         _Nano.Simulation_swiginit(self, _Nano.new_Simulation(params_, lattice, randomGenerator))
 
+    def get_event_rates(self):
+        return _Nano.Simulation_get_event_rates(self)
+
     def step(self):
         return _Nano.Simulation_step(self)
 
@@ -329,6 +319,32 @@ class SwigPyIterator(object):
 
 # Register SwigPyIterator in _Nano:
 _Nano.SwigPyIterator_swigregister(SwigPyIterator)
+
+class IntVecData(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    ptr = property(_Nano.IntVecData_ptr_get, _Nano.IntVecData_ptr_set)
+    size = property(_Nano.IntVecData_size_get, _Nano.IntVecData_size_set)
+
+    def __init__(self):
+        _Nano.IntVecData_swiginit(self, _Nano.new_IntVecData())
+    __swig_destroy__ = _Nano.delete_IntVecData
+
+# Register IntVecData in _Nano:
+_Nano.IntVecData_swigregister(IntVecData)
+
+class DoubleVecData(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    ptr = property(_Nano.DoubleVecData_ptr_get, _Nano.DoubleVecData_ptr_set)
+    size = property(_Nano.DoubleVecData_size_get, _Nano.DoubleVecData_size_set)
+
+    def __init__(self):
+        _Nano.DoubleVecData_swiginit(self, _Nano.new_DoubleVecData())
+    __swig_destroy__ = _Nano.delete_DoubleVecData
+
+# Register DoubleVecData in _Nano:
+_Nano.DoubleVecData_swigregister(DoubleVecData)
 
 class IntVector(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
