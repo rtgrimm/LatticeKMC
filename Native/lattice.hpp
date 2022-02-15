@@ -72,8 +72,9 @@ namespace Nano {
 
     struct Particle {
         static constexpr int32_t invalid_particle = -404;
-
         ParticleType type;
+        std::vector<IVec3D> hop_list;
+        std::vector<double> time_list;
     };
 
     struct RandomGenerator {
@@ -85,12 +86,12 @@ namespace Nano {
     class Lattice {
         struct ParticleData {
             Particle particle;
-            IVec3D location;
         };
 
     public:
         const IVec3D size;
         EnergyMap energy_map;
+        bool particle_tracking_enabled = false;
 
         explicit Lattice(IVec3D size_) : size(size_),
                                          _particle_map(size_, Particle::invalid_particle) {}
@@ -98,6 +99,22 @@ namespace Nano {
         Particle& particle_at(IVec3D loc) {
             auto index = _particle_map.get(loc);
             return _particles[index].particle;
+        }
+
+        void swap(IVec3D from_loc, IVec3D to_loc, double time) {
+            auto from_index = _particle_map.get(from_loc);
+            auto to_index = _particle_map.get(to_loc);
+
+            if(particle_tracking_enabled) {
+                auto from_to_hop = to_loc - from_loc;
+                auto to_from_hop = -from_to_hop;
+
+                _particles[from_index].particle.hop_list.push_back(from_to_hop);
+                _particles[to_index].particle.hop_list.push_back(to_from_hop);
+            }
+
+            _particle_map.set(from_loc, to_index);
+            _particle_map.set(to_loc, from_index);
         }
 
 
@@ -126,7 +143,7 @@ namespace Nano {
                 auto type = f(loc);
 
                 ParticleData data {
-                        Particle {type}, loc
+                        Particle {type}
                 };
 
                 _particle_map.set(loc, particle_id);
@@ -150,9 +167,9 @@ namespace Nano {
         std::vector<int32_t> get_types() {
             std::vector<int32_t> types;
 
-            for(auto& particle : _particles) {
-                types.push_back(particle.particle.type);
-            }
+            for_all(_particle_map.size, [&] (IVec3D& loc) {
+                types.push_back(particle_at(loc).type);
+            });
 
             return types;
         }

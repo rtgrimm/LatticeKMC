@@ -26,6 +26,24 @@ namespace Nano {
             return !(rhs == *this);
         }
 
+        IVec3D operator+(const IVec3D& other) const {
+            return IVec3D {
+              x + other.x,
+              y + other.y,
+              z + other.z,
+            };
+        }
+
+        IVec3D operator-() const {
+            return IVec3D {
+                -x, -y, -z
+            };
+        }
+
+        IVec3D operator-(const IVec3D& other) const {
+            return *this + (-other);
+        }
+
         IVec3D wrap(IVec3D size) const {
             auto wrap = [&] (int32_t index, int32_t bound) {
                 auto rem = index % bound;

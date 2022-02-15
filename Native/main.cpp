@@ -26,7 +26,7 @@ long clock_f(F f) {
 
 
 void run_kmc() {
-    Nano::Lattice lattice(Nano::IVec3D {100, 100, 100});
+    Nano::Lattice lattice(Nano::IVec3D {10, 10, 10});
 
 
 
@@ -50,13 +50,13 @@ void run_kmc() {
 
     auto step_count = 100000;
 
-    auto time = clock_f([&] {
+    //auto time = clock_f([&] {
         for (int i = 0; i < step_count; ++i) {
             simulation.step();
         }
-    }) / step_count;
+    //}) / step_count;
 
-    std::cout << "Time:" << time << std::endl;
+    //std::cout << "Time:" << time << std::endl;
 
 }
 

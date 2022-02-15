@@ -170,6 +170,9 @@ class Lattice(object):
     def particle_at(self, loc):
         return _Nano.Lattice_particle_at(self, loc)
 
+    def swap(self, from_loc, to_loc):
+        return _Nano.Lattice_swap(self, from_loc, to_loc)
+
     def site_energy(self, center, type):
         return _Nano.Lattice_site_energy(self, center, type)
 

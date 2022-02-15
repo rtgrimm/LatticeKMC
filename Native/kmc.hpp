@@ -14,22 +14,13 @@ namespace Nano::KMC {
             Nothing
         };
 
-
-
         class Dispatch {
             struct Swap {
-
-
-
-                static void execute(Lattice& lattice, IVec3D from_loc, IVec3D to_loc) {
-                    auto from = lattice.particle_at(from_loc);
-                    auto to = lattice.particle_at(to_loc);
-
-                    lattice.particle_at(from_loc) = to;
-                    lattice.particle_at(to_loc) = from;
+                static void execute(Lattice& lattice, IVec3D from_loc, IVec3D to_loc, double time) {
+                    lattice.swap(from_loc, to_loc, time);
                 }
 
-                static double rate(Lattice& lattice, IVec3D from_loc, IVec3D to_loc) {
+                static double rate(Lattice& lattice, IVec3D from_loc, IVec3D to_loc, double time) {
                     auto from = lattice.particle_at(from_loc);
                     auto to = lattice.particle_at(to_loc);
 
@@ -48,28 +39,26 @@ namespace Nano::KMC {
             };
 
         public:
-            static void execute(Type type, Lattice& lattice, IVec3D center, IVec3D target) {
+            static void execute(Type type, Lattice& lattice, IVec3D center, IVec3D target, double time) {
                 switch (type) {
                     case Type::Swap:
-                        Swap::execute(lattice, center, target);
+                        Swap::execute(lattice, center, target, time);
                         break;
                     case Type::Nothing:
                         break;
                 }
             }
 
-            static double calc_rate(Type type, Lattice& lattice, IVec3D center, IVec3D target) {
+            static double calc_rate(Type type, Lattice& lattice, IVec3D center, IVec3D target, double time) {
                 switch (type) {
                     case Type::Swap:
-                        return Swap::rate(lattice, center, target);
+                        return Swap::rate(lattice, center, target, time);
                     default:
                         return 0;
                 }
             }
         };
     }
-
-
 
     struct SimulationParams {
         std::vector<Events::Type> allowed_events;
@@ -191,7 +180,7 @@ namespace Nano::KMC {
             auto [selected_event, k_total] = _cache.choose_event(*random_generator);
 
             Events::Dispatch::execute(selected_event.type, *lattice,
-                            selected_event.center, selected_event.target);
+                            selected_event.center, selected_event.target, _time);
 
             update_surrounding_events(
                     selected_event.center, selected_event.target);
