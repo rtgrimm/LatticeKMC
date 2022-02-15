@@ -16,7 +16,15 @@ namespace Nano {
             return x * y * z;
         }
 
+        bool operator==(const IVec3D &rhs) const {
+            return x == rhs.x &&
+                   y == rhs.y &&
+                   z == rhs.z;
+        }
 
+        bool operator!=(const IVec3D &rhs) const {
+            return !(rhs == *this);
+        }
 
         IVec3D wrap(IVec3D size) const {
             auto wrap = [&] (int32_t index, int32_t bound) {
@@ -69,7 +77,7 @@ namespace Nano {
     public:
         const IVec3D size;
 
-        explicit Tensor(IVec3D size, T start_value) : size(size) {
+        explicit Tensor(IVec3D size, T start_value = T()) : size(size) {
             _items.resize(size.V());
             std::fill(std::begin(_items), std::end(_items), start_value);
         }

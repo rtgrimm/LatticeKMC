@@ -25,6 +25,12 @@ namespace Nano {
             _types.push_back(id);
         }
 
+        void reset() {
+            _interactions.clear();
+            _field.clear();
+            _types.clear();
+        }
+
         void set_uniform_binary(double interaction, double field) {
             auto b = -1;
             auto a = 1;
@@ -93,6 +99,7 @@ namespace Nano {
             auto index = _particle_map.get(loc);
             return _particles[index].particle;
         }
+
 
         double site_energy(IVec3D center, ParticleType type) {
             auto interaction = [&] (IVec3D other_loc)  {

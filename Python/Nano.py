@@ -72,6 +72,12 @@ class IVec3D(object):
     def V(self):
         return _Nano.IVec3D_V(self)
 
+    def __eq__(self, rhs):
+        return _Nano.IVec3D___eq__(self, rhs)
+
+    def __ne__(self, rhs):
+        return _Nano.IVec3D___ne__(self, rhs)
+
     def wrap(self, size):
         return _Nano.IVec3D_wrap(self, size)
 
@@ -101,6 +107,9 @@ class EnergyMap(object):
 
     def add_particle_type(self, id):
         return _Nano.EnergyMap_add_particle_type(self, id)
+
+    def reset(self):
+        return _Nano.EnergyMap_reset(self)
 
     def set_uniform_binary(self, interaction, field):
         return _Nano.EnergyMap_set_uniform_binary(self, interaction, field)
@@ -216,6 +225,44 @@ class SimulationParams(object):
 # Register SimulationParams in _Nano:
 _Nano.SimulationParams_swigregister(SimulationParams)
 
+class Event(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    rate = property(_Nano.Event_rate_get, _Nano.Event_rate_set)
+    type = property(_Nano.Event_type_get, _Nano.Event_type_set)
+    center = property(_Nano.Event_center_get, _Nano.Event_center_set)
+    target = property(_Nano.Event_target_get, _Nano.Event_target_set)
+
+    def __init__(self):
+        _Nano.Event_swiginit(self, _Nano.new_Event())
+    __swig_destroy__ = _Nano.delete_Event
+
+# Register Event in _Nano:
+_Nano.Event_swigregister(Event)
+
+class EventCache(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, size):
+        _Nano.EventCache_swiginit(self, _Nano.new_EventCache(size))
+
+    def empty(self):
+        return _Nano.EventCache_empty(self)
+
+    def add_event(self, event):
+        return _Nano.EventCache_add_event(self, event)
+
+    def clear_location(self, center):
+        return _Nano.EventCache_clear_location(self, center)
+
+    def choose_event(self, generator):
+        return _Nano.EventCache_choose_event(self, generator)
+    __swig_destroy__ = _Nano.delete_EventCache
+
+# Register EventCache in _Nano:
+_Nano.EventCache_swigregister(EventCache)
+
 class Simulation(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -226,11 +273,11 @@ class Simulation(object):
     def __init__(self, params_, lattice, randomGenerator):
         _Nano.Simulation_swiginit(self, _Nano.new_Simulation(params_, lattice, randomGenerator))
 
-    def get_event_rates(self):
-        return _Nano.Simulation_get_event_rates(self)
-
     def step(self):
         return _Nano.Simulation_step(self)
+
+    def multi_step(self, count):
+        return _Nano.Simulation_multi_step(self, count)
 
     def get_time(self):
         return _Nano.Simulation_get_time(self)

@@ -51,15 +51,42 @@ def run_metro_test():
     plt.show()
 
 
+def set_model(lattice, mu_a, mu_b, mu_v, T, J_v_b = 0.0, J_v_a = 0.0, k_b = 1.0):
+    lattice.energy_map.add_particle_type(-1)
+    lattice.energy_map.add_particle_type(0)
+    lattice.energy_map.add_particle_type(1)
+
+    lattice.energy_map.set_interaction(1, 0, J_v_b)
+    lattice.energy_map.set_interaction(-1, 0, J_v_a)
+    lattice.energy_map.set_interaction(1, -1, 1.0)
+
+    lattice.energy_map.set_interaction(1, 1, -1.0)
+    lattice.energy_map.set_interaction(-1, -1, -1.0)
+    lattice.energy_map.set_interaction(0, 0, 0.0)
+
+    lattice.energy_map.set_field(1, mu_a)
+    lattice.energy_map.set_field(-1, mu_b)
+    lattice.energy_map.set_field(0, mu_v)
+
+    lattice.energy_map.beta = 1 / (T * k_b)
+
 def run_kmc_test():
     dim = Nano.IVec3D()
-    dim.x = 10; dim.y = 10; dim.z = 10
+    dim.x = 150; dim.y = 150; dim.z = 1
 
     lattice = Nano.Lattice(dim)
-    lattice.energy_map.set_uniform_binary(-1.0, 0.0)
+    set_model(lattice, 2.1, 2.1, 2.0, 2.0)
+
 
     gen = Nano.RandomGenerator(123)
     lattice.uniform_init(gen)
+
+    metropolis = Nano.Metropolis(lattice, gen)
+    metropolis.step(int(1e6))
+
+    lattice.energy_map.reset()
+    set_model(lattice, 2.1, 2.1, 2.0, 0.5)
+
 
     run_kmc(dim, gen, lattice)
 
@@ -69,24 +96,19 @@ def run_kmc(dim, gen, lattice):
     sim = Nano.Simulation(sim_params, lattice, gen)
     plt.ion()
     fig = plt.gcf()
-    ax = fig.add_subplot(projection='3d')
+    #ax = fig.add_subplot(projection='3d')
     for i in range(0, 1000):
-        ax.clear()
+        #ax.clear()
 
-        sim.step()
-
-        rates = double_vec_to_mat(sim.get_event_rates())
-        rates_types = np.sort(np.unique(rates))
-
-        x = np.unique(rates, return_counts=True)
-
+        sim.multi_step(10000)
 
         output = int_vec_to_mat(lattice.get_types())
         grid = output.reshape((dim.x, dim.y, dim.z))
-        # plt.imshow(grid[:,:,0])
+        plt.imshow(grid[:,:,0])
 
-        plot_point_cloud(grid, 1, ax, "red", s=100.0)
-        # plot_point_cloud(grid, -1, ax)
+        #plot_point_cloud(grid, -1, ax, "green", s=1.0)
+        #plot_point_cloud(grid, 1, ax, "blue", s=1.0)
+        #plot_point_cloud(grid, 0, ax, "red", s=1.0)
 
         print(f"{sim.get_time()}")
         print(f"A:{np.sum(grid == -1)}")
