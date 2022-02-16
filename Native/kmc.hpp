@@ -24,6 +24,11 @@ namespace Nano::KMC {
                     auto from = lattice.particle_at(from_loc);
                     auto to = lattice.particle_at(to_loc);
 
+                    if(from.type == to.type) {
+                        return 0.0;
+                    }
+
+
                     auto E_i = lattice.site_energy(from_loc, from.type)
                                + lattice.site_energy(to_loc, to.type);
 
@@ -88,6 +93,10 @@ namespace Nano::KMC {
         }
 
         void add_event(const Event& event) {
+            if(event.rate == 0.0) {
+                return;
+            }
+
             auto& event_list = _group_map[event.rate];
             auto key = std::make_tuple(
                     event.rate, static_cast<int32_t>(event_list.size()));
@@ -147,6 +156,91 @@ namespace Nano::KMC {
 
         Tensor<std::vector<std::tuple<GroupId, EventId>>> _id_map;
         std::map<GroupId, std::vector<Event>> _group_map;
+    };
+
+    struct TimeBin {
+        double t_0 = 0.0;
+        double t_1 = 0.0;
+
+        std::vector<double> displacement_bins;
+    };
+
+    struct TimeSeries {
+        std::vector<double> times;
+        std::vector<double> values;
+    };
+
+    class MSDEstimate {
+
+
+    public:
+        explicit MSDEstimate(Lattice* lattice) : _lattice(lattice) {}
+
+        void run(double max_time, double time_bin_width, ParticleType type) {
+            build_time_bins(max_time, time_bin_width);
+            bin_displacements(max_time, type);
+        }
+
+        TimeSeries get_MSD_series() {
+            TimeSeries series;
+
+            for (auto& time_bin : _time_bins) {
+
+                auto& displacement_bin = time_bin.displacement_bins;
+
+                if(displacement_bin.size() == 0) {
+                    continue;
+                }
+
+                auto mean = 0.0;
+                for(auto& x : displacement_bin) { mean += x;}
+                
+                mean /= displacement_bin.size();
+                
+                series.values.push_back(mean);
+                series.times.push_back(time_bin.t_0);
+            }
+
+            return std::move(series);
+        }
+
+    private:
+        void build_time_bins(double max_time, double time_bin_width) {
+            auto time_bin_count = static_cast<int32_t>(ceil(max_time / time_bin_width));
+            _time_bins.reserve(time_bin_count);
+
+            for (int i = 0; i < time_bin_count; ++i) {
+                _time_bins.push_back({
+                    time_bin_width * i, time_bin_width * (i + 1)});
+            }
+        }
+
+        void bin_displacements(double max_time, ParticleType type) {
+            auto& particles = _lattice->get_particles();
+
+            for(auto& particle : particles) {
+                if(particle.type != type)
+                    continue;
+
+                auto& time_list = particle.time_list;
+                auto& hop_list = particle.hop_list;
+
+                IVec3D position {0, 0, 0};
+
+                for (int i = 0; i < time_list.size(); ++i) {
+                    auto time = time_list[i];
+                    auto hop = hop_list[i];
+                    auto index = static_cast<int32_t>(floor(time * _time_bins.size() / max_time));
+
+                    auto displacement = position.length_sq();
+                    _time_bins[index].displacement_bins.push_back(displacement);
+                    position = position + hop;
+                }
+            }
+        }
+
+        std::vector<TimeBin> _time_bins;
+        Lattice* _lattice;
     };
 
     class Simulation {
@@ -223,33 +317,33 @@ namespace Nano::KMC {
         void update_surrounding_events(IVec3D center, std::optional<IVec3D> ignore) {
             update_events(center, ignore);
 
-            for(auto target : nearest(center)) {
+            lattice->nearest(center, [&] (IVec3D target) {
                 update_events(target, ignore);
-            }
+            });
         }
 
         void update_events(IVec3D loc, std::optional<IVec3D> ignore) {
             _cache.clear_location(loc);
 
             for(auto& event_type : params.allowed_events) {
-                for(auto target : nearest(loc)) {
+                lattice->nearest(loc, [&] (IVec3D target) {
                     if(ignore.has_value() && target == ignore.value()) {
-                        continue;
+                        return;
                     }
 
                     auto rate = Events::Dispatch::calc_rate(
-                            event_type, *lattice, loc, target);
+                            event_type, *lattice, loc, target, _time);
 
                     if(rate == 0.0) {
-                        continue;
+                        return;
                     }
 
                     Event event {
-                        rate, event_type, loc, target
+                            rate, event_type, loc, target
                     };
 
                     _cache.add_event(event);
-                }
+                });
 
             }
         }

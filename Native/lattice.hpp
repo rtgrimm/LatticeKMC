@@ -68,11 +68,10 @@ namespace Nano {
         std::vector<ParticleType> _types;
     };
 
-
-
     struct Particle {
         static constexpr int32_t invalid_particle = -404;
         ParticleType type;
+        IVec3D start_pos;
         std::vector<IVec3D> hop_list;
         std::vector<double> time_list;
     };
@@ -83,34 +82,49 @@ namespace Nano {
         explicit RandomGenerator(size_t seed) : gen(seed) {}
     };
 
+    enum class LatticeDim {
+        One, Two, Three
+    };
+
     class Lattice {
-        struct ParticleData {
-            Particle particle;
-        };
 
     public:
         const IVec3D size;
         EnergyMap energy_map;
-        bool particle_tracking_enabled = false;
 
-        explicit Lattice(IVec3D size_) : size(size_),
-                                         _particle_map(size_, Particle::invalid_particle) {}
+        void enable_particle_tracking() {
+            _particle_tracking_enabled = true;
+        }
+
+        void disable_particle_tracking() {
+            _particle_tracking_enabled = false;
+        }
+
+        void set_dim(LatticeDim dim) {
+            _dim = dim;
+        }
+
+        explicit Lattice(IVec3D size_) :
+            size(size_), _particle_map(size_, Particle::invalid_particle) {}
 
         Particle& particle_at(IVec3D loc) {
             auto index = _particle_map.get(loc);
-            return _particles[index].particle;
+            return _particles[index];
         }
 
         void swap(IVec3D from_loc, IVec3D to_loc, double time) {
             auto from_index = _particle_map.get(from_loc);
             auto to_index = _particle_map.get(to_loc);
 
-            if(particle_tracking_enabled) {
+            if(_particle_tracking_enabled) {
                 auto from_to_hop = to_loc - from_loc;
                 auto to_from_hop = -from_to_hop;
 
-                _particles[from_index].particle.hop_list.push_back(from_to_hop);
-                _particles[to_index].particle.hop_list.push_back(to_from_hop);
+                _particles[from_index].hop_list.push_back(from_to_hop);
+                _particles[to_index].hop_list.push_back(to_from_hop);
+
+                _particles[from_index].time_list.push_back(time);
+                _particles[to_index].time_list.push_back(time);
             }
 
             _particle_map.set(from_loc, to_index);
@@ -128,11 +142,22 @@ namespace Nano {
 
             double energy = energy_map.get_field(type);
 
-            for(auto& target : nearest(center)) {
+            nearest(center, [&] (IVec3D target) {
                 energy += interaction(target);
-            }
+            });
 
             return energy;
+        }
+
+        template<class F>
+        void nearest(IVec3D center, F f) {
+            if(_dim == LatticeDim::One) {
+                nearest_neighbours(center, f, 1);
+            } else if(_dim == LatticeDim::Two) {
+                nearest_neighbours(center, f, 2);
+            } else if(_dim == LatticeDim::Three) {
+                nearest_neighbours(center, f, 3);
+            }
         }
 
         template<class F>
@@ -142,9 +167,7 @@ namespace Nano {
             for_all(size,[&] (IVec3D loc) {
                 auto type = f(loc);
 
-                ParticleData data {
-                        Particle {type}
-                };
+                Particle data {type, loc};
 
                 _particle_map.set(loc, particle_id);
                 _particles.push_back(data);
@@ -174,11 +197,14 @@ namespace Nano {
             return types;
         }
 
+        const std::vector<Particle>& get_particles() const {
+            return _particles;
+        }
+
     private:
-        std::vector<ParticleData> _particles;
+        bool _particle_tracking_enabled = false;
+        std::vector<Particle> _particles;
         Tensor<int32_t> _particle_map;
+        LatticeDim _dim = LatticeDim::Three;
     };
-
-
-
 }

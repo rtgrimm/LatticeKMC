@@ -36,6 +36,8 @@ void run_kmc() {
     Nano::RandomGenerator generator (123);
     lattice.uniform_init(generator);
 
+    lattice.enable_particle_tracking();
+
     Nano::Metropolis::Metropolis metropolis(&lattice, &generator);
 
     metropolis.step(1000);
@@ -48,15 +50,19 @@ void run_kmc() {
             params, &lattice, &generator);
 
 
-    auto step_count = 100000;
+    auto step_count = 10000;
 
-    //auto time = clock_f([&] {
+    auto time = clock_f([&] {
         for (int i = 0; i < step_count; ++i) {
             simulation.step();
         }
-    //}) / step_count;
+    }) / step_count;
 
-    //std::cout << "Time:" << time << std::endl;
+    Nano::KMC::MSDEstimate msd_estimate(&lattice);
+    msd_estimate.run(simulation.get_time(), 1e-3, 1);
+    auto series = msd_estimate.get_MSD_series();
+
+    std::cout << "times:" << time << std::endl;
 
 }
 

@@ -44,6 +44,14 @@ namespace Nano {
             return *this + (-other);
         }
 
+        double length_sq() const {
+            auto x_f = static_cast<double>(x);
+            auto y_f = static_cast<double>(y);
+            auto z_f = static_cast<double>(z);
+
+            return x_f*x_f + y_f*y_f + z_f*z_f;
+        }
+
         IVec3D wrap(IVec3D size) const {
             auto wrap = [&] (int32_t index, int32_t bound) {
                 auto rem = index % bound;
@@ -74,20 +82,23 @@ namespace Nano {
         }
     }
 
-    std::array<IVec3D, 6> nearest(IVec3D loc) {
-        auto x = loc.x;
-        auto y = loc.y;
-        auto z = loc.z;
-
-        return {
-          IVec3D {x + 1, y, z},
-          IVec3D {x - 1, y, z},
-          IVec3D {x, y + 1, z},
-          IVec3D {x, y - 1, z},
-          IVec3D {x, y, z + 1},
-          IVec3D {x, y, z - 1},
+    template<class F>
+    void nearest_neighbours(IVec3D loc, F f, size_t dim) {
+        static constexpr std::array<IVec3D, 6> offsets = {
+                IVec3D {-1, 0, 0},
+                IVec3D {1, 0, 0},
+                IVec3D {0, -1, 0},
+                IVec3D {0, 1, 0},
+                IVec3D {0, 0, -1},
+                IVec3D {0, 0, 1},
         };
+
+        for (int i = 0; i < dim * 2; ++i) {
+            f(loc + offsets[i]);
+        }
     }
+
+
 
 
     template<class T, bool Periodic = true>

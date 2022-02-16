@@ -78,6 +78,18 @@ class IVec3D(object):
     def __ne__(self, rhs):
         return _Nano.IVec3D___ne__(self, rhs)
 
+    def __add__(self, other):
+        return _Nano.IVec3D___add__(self, other)
+
+    def __neg__(self):
+        return _Nano.IVec3D___neg__(self)
+
+    def __sub__(self, other):
+        return _Nano.IVec3D___sub__(self, other)
+
+    def length_sq(self):
+        return _Nano.IVec3D_length_sq(self)
+
     def wrap(self, size):
         return _Nano.IVec3D_wrap(self, size)
 
@@ -88,9 +100,6 @@ class IVec3D(object):
 # Register IVec3D in _Nano:
 _Nano.IVec3D_swigregister(IVec3D)
 
-
-def nearest(loc):
-    return _Nano.nearest(loc)
 
 def vector_data(*args):
     return _Nano.vector_data(*args)
@@ -138,6 +147,9 @@ class Particle(object):
     __repr__ = _swig_repr
     invalid_particle = _Nano.Particle_invalid_particle
     type = property(_Nano.Particle_type_get, _Nano.Particle_type_set)
+    start_pos = property(_Nano.Particle_start_pos_get, _Nano.Particle_start_pos_set)
+    hop_list = property(_Nano.Particle_hop_list_get, _Nano.Particle_hop_list_set)
+    time_list = property(_Nano.Particle_time_list_get, _Nano.Particle_time_list_set)
 
     def __init__(self):
         _Nano.Particle_swiginit(self, _Nano.new_Particle())
@@ -158,11 +170,23 @@ class RandomGenerator(object):
 # Register RandomGenerator in _Nano:
 _Nano.RandomGenerator_swigregister(RandomGenerator)
 
+LatticeDim_One = _Nano.LatticeDim_One
+LatticeDim_Two = _Nano.LatticeDim_Two
+LatticeDim_Three = _Nano.LatticeDim_Three
 class Lattice(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
     size = property(_Nano.Lattice_size_get)
     energy_map = property(_Nano.Lattice_energy_map_get, _Nano.Lattice_energy_map_set)
+
+    def enable_particle_tracking(self):
+        return _Nano.Lattice_enable_particle_tracking(self)
+
+    def disable_particle_tracking(self):
+        return _Nano.Lattice_disable_particle_tracking(self)
+
+    def set_dim(self, dim):
+        return _Nano.Lattice_set_dim(self, dim)
 
     def __init__(self, size_):
         _Nano.Lattice_swiginit(self, _Nano.new_Lattice(size_))
@@ -170,8 +194,8 @@ class Lattice(object):
     def particle_at(self, loc):
         return _Nano.Lattice_particle_at(self, loc)
 
-    def swap(self, from_loc, to_loc):
-        return _Nano.Lattice_swap(self, from_loc, to_loc)
+    def swap(self, from_loc, to_loc, time):
+        return _Nano.Lattice_swap(self, from_loc, to_loc, time)
 
     def site_energy(self, center, type):
         return _Nano.Lattice_site_energy(self, center, type)
@@ -181,6 +205,9 @@ class Lattice(object):
 
     def get_types(self):
         return _Nano.Lattice_get_types(self)
+
+    def get_particles(self):
+        return _Nano.Lattice_get_particles(self)
     __swig_destroy__ = _Nano.delete_Lattice
 
 # Register Lattice in _Nano:
@@ -193,12 +220,12 @@ class Dispatch(object):
     __repr__ = _swig_repr
 
     @staticmethod
-    def execute(type, lattice, center, target):
-        return _Nano.Dispatch_execute(type, lattice, center, target)
+    def execute(type, lattice, center, target, time):
+        return _Nano.Dispatch_execute(type, lattice, center, target, time)
 
     @staticmethod
-    def calc_rate(type, lattice, center, target):
-        return _Nano.Dispatch_calc_rate(type, lattice, center, target)
+    def calc_rate(type, lattice, center, target, time):
+        return _Nano.Dispatch_calc_rate(type, lattice, center, target, time)
 
     def __init__(self):
         _Nano.Dispatch_swiginit(self, _Nano.new_Dispatch())
@@ -207,11 +234,11 @@ class Dispatch(object):
 # Register Dispatch in _Nano:
 _Nano.Dispatch_swigregister(Dispatch)
 
-def Dispatch_execute(type, lattice, center, target):
-    return _Nano.Dispatch_execute(type, lattice, center, target)
+def Dispatch_execute(type, lattice, center, target, time):
+    return _Nano.Dispatch_execute(type, lattice, center, target, time)
 
-def Dispatch_calc_rate(type, lattice, center, target):
-    return _Nano.Dispatch_calc_rate(type, lattice, center, target)
+def Dispatch_calc_rate(type, lattice, center, target, time):
+    return _Nano.Dispatch_calc_rate(type, lattice, center, target, time)
 
 class SimulationParams(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
@@ -265,6 +292,50 @@ class EventCache(object):
 
 # Register EventCache in _Nano:
 _Nano.EventCache_swigregister(EventCache)
+
+class TimeBin(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    t_0 = property(_Nano.TimeBin_t_0_get, _Nano.TimeBin_t_0_set)
+    t_1 = property(_Nano.TimeBin_t_1_get, _Nano.TimeBin_t_1_set)
+    displacement_bins = property(_Nano.TimeBin_displacement_bins_get, _Nano.TimeBin_displacement_bins_set)
+
+    def __init__(self):
+        _Nano.TimeBin_swiginit(self, _Nano.new_TimeBin())
+    __swig_destroy__ = _Nano.delete_TimeBin
+
+# Register TimeBin in _Nano:
+_Nano.TimeBin_swigregister(TimeBin)
+
+class TimeSeries(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    times = property(_Nano.TimeSeries_times_get, _Nano.TimeSeries_times_set)
+    values = property(_Nano.TimeSeries_values_get, _Nano.TimeSeries_values_set)
+
+    def __init__(self):
+        _Nano.TimeSeries_swiginit(self, _Nano.new_TimeSeries())
+    __swig_destroy__ = _Nano.delete_TimeSeries
+
+# Register TimeSeries in _Nano:
+_Nano.TimeSeries_swigregister(TimeSeries)
+
+class MSDEstimate(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, lattice):
+        _Nano.MSDEstimate_swiginit(self, _Nano.new_MSDEstimate(lattice))
+
+    def run(self, max_time, time_bin_width, type):
+        return _Nano.MSDEstimate_run(self, max_time, time_bin_width, type)
+
+    def get_MSD_series(self):
+        return _Nano.MSDEstimate_get_MSD_series(self)
+    __swig_destroy__ = _Nano.delete_MSDEstimate
+
+# Register MSDEstimate in _Nano:
+_Nano.MSDEstimate_swigregister(MSDEstimate)
 
 class Simulation(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
@@ -607,6 +678,112 @@ class DoubleVector(object):
 
 # Register DoubleVector in _Nano:
 _Nano.DoubleVector_swigregister(DoubleVector)
+
+class IVec3DVector(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _Nano.IVec3DVector_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _Nano.IVec3DVector___nonzero__(self)
+
+    def __bool__(self):
+        return _Nano.IVec3DVector___bool__(self)
+
+    def __len__(self):
+        return _Nano.IVec3DVector___len__(self)
+
+    def __getslice__(self, i, j):
+        return _Nano.IVec3DVector___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _Nano.IVec3DVector___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _Nano.IVec3DVector___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _Nano.IVec3DVector___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _Nano.IVec3DVector___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _Nano.IVec3DVector___setitem__(self, *args)
+
+    def pop(self):
+        return _Nano.IVec3DVector_pop(self)
+
+    def append(self, x):
+        return _Nano.IVec3DVector_append(self, x)
+
+    def empty(self):
+        return _Nano.IVec3DVector_empty(self)
+
+    def size(self):
+        return _Nano.IVec3DVector_size(self)
+
+    def swap(self, v):
+        return _Nano.IVec3DVector_swap(self, v)
+
+    def begin(self):
+        return _Nano.IVec3DVector_begin(self)
+
+    def end(self):
+        return _Nano.IVec3DVector_end(self)
+
+    def rbegin(self):
+        return _Nano.IVec3DVector_rbegin(self)
+
+    def rend(self):
+        return _Nano.IVec3DVector_rend(self)
+
+    def clear(self):
+        return _Nano.IVec3DVector_clear(self)
+
+    def get_allocator(self):
+        return _Nano.IVec3DVector_get_allocator(self)
+
+    def pop_back(self):
+        return _Nano.IVec3DVector_pop_back(self)
+
+    def erase(self, *args):
+        return _Nano.IVec3DVector_erase(self, *args)
+
+    def __init__(self, *args):
+        _Nano.IVec3DVector_swiginit(self, _Nano.new_IVec3DVector(*args))
+
+    def push_back(self, x):
+        return _Nano.IVec3DVector_push_back(self, x)
+
+    def front(self):
+        return _Nano.IVec3DVector_front(self)
+
+    def back(self):
+        return _Nano.IVec3DVector_back(self)
+
+    def assign(self, n, x):
+        return _Nano.IVec3DVector_assign(self, n, x)
+
+    def resize(self, *args):
+        return _Nano.IVec3DVector_resize(self, *args)
+
+    def insert(self, *args):
+        return _Nano.IVec3DVector_insert(self, *args)
+
+    def reserve(self, n):
+        return _Nano.IVec3DVector_reserve(self, n)
+
+    def capacity(self):
+        return _Nano.IVec3DVector_capacity(self)
+    __swig_destroy__ = _Nano.delete_IVec3DVector
+
+# Register IVec3DVector in _Nano:
+_Nano.IVec3DVector_swigregister(IVec3DVector)
 
 
 
