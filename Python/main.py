@@ -1,4 +1,7 @@
+from matplotlib import pyplot as plt
+
 import Nano
+from Python import Nano
 from Python.Nano import vector_data
 from Python.style import set_style, pal
 from Python.wrap import int_vec_to_mat, double_vec_to_mat, IVec3D_to_mat
@@ -72,9 +75,86 @@ def set_model(lattice, mu_a, mu_b, mu_v, T, J_v_b = 0.0, J_v_a = 0.0, k_b = 1.0)
 
     lattice.energy_map.beta = 1 / (T * k_b)
 
-def run_kmc_test():
+def run_MSD_demo(sim, lattice, dim):
+    plt.ion()
+    plt.figure(figsize=(16, 9))
+    lattice.enable_particle_tracking()
+    for i in range(0, 1000):
+        #ax.clear()
+        plt.clf()
+
+        sim.multi_step(10000)
+
+        colors = pal("bright", 3)
+
+        plot_MSD(lattice, sim, 1, next(colors), "A")
+        plot_MSD(lattice, sim, 0, next(colors), "V")
+        plot_MSD(lattice, sim, -1, next(colors), "B")
+        plt.legend(frameon=False)
+        plt.tight_layout()
+
+        plt.xlabel("Time")
+        plt.ylabel("MSD")
+
+        plt.draw()
+        plt.pause(1e-8)
+
+def run_point_cloud_demo(sim, lattice, dim):
+    plt.ion()
+    fig = plt.figure(figsize=(16, 9))
+    ax = fig.add_subplot(projection='3d')
+    lattice.enable_particle_tracking()
+    for i in range(0, 1000):
+        ax.clear()
+
+        sim.multi_step(10000)
+
+        output = int_vec_to_mat(lattice.get_types())
+        grid = output.reshape((dim.x, dim.y, dim.z))
+
+        plot_point_cloud(grid, -1, ax, "green", s=10.0)
+        plot_point_cloud(grid, 1, ax, "blue", s=10.0)
+        plot_point_cloud(grid, 0, ax, "red", s=10.0)
+
+        plt.draw()
+        plt.pause(1e-8)
+
+def run_2d_demo(sim, lattice, dim):
+    plt.ion()
+    fig = plt.figure(figsize=(16, 9))
+    lattice.enable_particle_tracking()
+    for i in range(0, 1000):
+        fig.clear()
+
+        sim.multi_step(10000)
+
+        output = int_vec_to_mat(lattice.get_types())
+        grid = output.reshape((dim.x, dim.y, dim.z))
+        plt.imshow(grid[:,:,0])
+
+        plt.draw()
+        plt.pause(1e-8)
+
+def run_walk_demo(sim, lattice, dim):
+    plt.ion()
+    fig = plt.figure(figsize=(16, 9))
+    lattice.enable_particle_tracking()
+    for i in range(0, 1000):
+        fig.clear()
+
+        sim.multi_step(10000)
+
+        for i in range(0, 50):
+            for j in range(0, 50):
+                plot_particle_data(lattice, i, j, 0)
+
+
+        plt.draw()
+        plt.pause(1e-8)
+
+def run_kmc_test(f, dim_):
     dim = Nano.IVec3D()
-    dim.x = 1000; dim.y = 1000; dim.z = 1
+    dim.x, dim.y, dim.z = dim_
 
     lattice = Nano.Lattice(dim)
     lattice.set_dim(Nano.LatticeDim_Two)
@@ -90,8 +170,12 @@ def run_kmc_test():
     lattice.energy_map.reset()
     set_model(lattice, 2.0, 2.0, 0.1625, 2.0, J_v_b=0.0, J_v_a=0.0)
 
+    sim_params = Nano.SimulationParams()
+    sim_params.default_events()
+    sim = Nano.Simulation(sim_params, lattice, gen)
 
-    run_kmc(dim, gen, lattice)
+    f(sim, lattice, dim)
+
 
 def plot_particle_data(lattice, x, y, z):
     point = Nano.IVec3D()
@@ -123,50 +207,11 @@ def plot_MSD(lattice, sim, type, color, name):
     plt.scatter(times, means, s=10.0, color=color)
     plt.plot(times, means, color=color, label=name)
 
-def run_kmc(dim, gen, lattice):
-    sim_params = Nano.SimulationParams()
-    sim_params.default_events()
-    sim = Nano.Simulation(sim_params, lattice, gen)
-
-    plt.ion()
-    fig = plt.gcf()
-    #ax = fig.add_subplot(projection='3d')
-
-    lattice.enable_particle_tracking()
-
-    for i in range(0, 1000):
-        #ax.clear()
-        plt.clf()
-
-        sim.multi_step(10000)
-
-        colors = pal("bright", 3)
-
-        plot_MSD(lattice, sim, 1, next(colors), "A")
-        plot_MSD(lattice, sim, 0, next(colors), "V")
-        plot_MSD(lattice, sim, -1, next(colors), "B")
-        plt.legend(frameon=False)
-        plt.ylabel("MSD")
-        plt.xlabel("Time")
-
-        #for i in range(0, 50):
-        #    for j in range(0, 50):
-        #        plot_particle_data(lattice, i, j, 0)
-
-        #output = int_vec_to_mat(lattice.get_types())
-        #grid = output.reshape((dim.x, dim.y, dim.z))
-        #plt.imshow(grid[:,:,0])
-
-        #plot_point_cloud(grid, -1, ax, "green", s=1.0)
-        #plot_point_cloud(grid, 1, ax, "blue", s=1.0)
-        #plot_point_cloud(grid, 0, ax, "red", s=1.0)
-
-
-        plt.draw()
-        plt.pause(1e-8)
-
 
 
 if __name__ == '__main__':
     set_style()
-    run_kmc_test()
+    #run_kmc_test(run_point_cloud_demo, (25, 25, 25))
+    #run_kmc_test(run_walk_demo, (500, 500, 1))
+    run_kmc_test(run_MSD_demo, (250, 250, 1))
+    #run_kmc_test(run_2d_demo, (250, 250, 1))

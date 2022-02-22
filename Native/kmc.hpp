@@ -37,9 +37,11 @@ namespace Nano::KMC {
 
                     auto delta_E = E_f - E_i;
 
-                    auto rate = std::exp(-delta_E * lattice.energy_map.beta);
-
-                    return rate;
+                    if(delta_E > 0) {
+                        return std::exp(-delta_E * lattice.energy_map.beta);
+                    } else {
+                        return 1.0;
+                    }
                 }
             };
 
