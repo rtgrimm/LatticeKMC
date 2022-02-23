@@ -91,20 +91,68 @@ def MSD():
     return time_list, MSD_list, param_list
 
 
+
 def plot_MSD(MSD):
+    for power_law in [True, False]:
+        plt.figure(figsize=(32, 32))
+
+        time_list, MSD_list, param_list = MSD
+
+        colors = pal("bright", len(MSD[0]))
+
+
+
+        for times, means, params in zip(time_list, MSD_list, param_list):
+            #plt.scatter(times, means, s=10.0)
+            mu_v = params["mu_v"]
+
+            color = next(colors)
+
+            if power_law:
+                times = np.log(times)
+                means = np.log(means)
+
+                line_fit_cutoff = int(len(times) * 0.9)
+                coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
+                plt.plot(times, np.polyval(coeff, times), c=color)
+
+            plt.plot(times, means, label = f"$\mu_v = {mu_v}$; $m = {coeff[0]}$", c=color)
+
+
+        plt.legend(frameon=False)
+        plt.ylabel("MSD")
+        plt.xlabel("Time")
+
+        if power_law:
+            plt.savefig("figures/MSD_mu_v_log_log.pdf")
+        else:
+            plt.savefig("figures/MSD_mu_v.pdf")
+
+def plot_diffusion_const(MSD):
     plt.figure(figsize=(32, 18))
 
     time_list, MSD_list, param_list = MSD
 
+    mu_v_list = []
+    D_list = []
+
     for times, means, params in zip(time_list, MSD_list, param_list):
-        #plt.scatter(times, means, s=10.0)
-        mu_v = params["mu_v"]
-        plt.plot(times, means, label = f"$\mu_v = {mu_v}$")
+        line_fit_cutoff = int(len(times) * 0.5)
+        coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
+
+        mu_v_list.append(params["mu_v"])
+        D_list.append(coeff[0])
+
+    mu_v_list, D_list = map(np.array, [mu_v_list, D_list])
+
+    plt.plot(1/mu_v_list, D_list)
+    plt.scatter(1/mu_v_list, D_list, s=50)
 
     plt.legend(frameon=False)
-    plt.ylabel("MSD")
-    plt.xlabel("Time")
-    plt.savefig("figures/MSD_mu_v.pdf")
+    plt.ylabel("$D$ (Line Fit)")
+    plt.xlabel("$(\mu_v)^{-1}$")
+
+    plt.savefig("figures/D_mu_v.pdf")
 
 def main():
     set_style()
@@ -113,10 +161,12 @@ def main():
 
     graph.register_all(map(dg.task, [
         plot_MSD,
+        plot_diffusion_const,
         MSD
     ]))
 
     graph("plot_MSD")
+    graph("plot_diffusion_const")
 
 if __name__ == '__main__':
     main()
