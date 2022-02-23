@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <utility>
 #include <set>
+#include <iostream>
 
 namespace Nano::KMC {
     namespace Events {
@@ -173,21 +174,40 @@ namespace Nano::KMC {
     };
 
     class MSDEstimate {
-
-
     public:
-        explicit MSDEstimate(Lattice* lattice) : _lattice(lattice) {}
-
-        void run(double max_time, double time_bin_width, ParticleType type) {
-            build_time_bins(max_time, time_bin_width);
-            bin_displacements(max_time, type);
+        MSDEstimate(double maxTime, double timeBinWidth) : _max_time(maxTime), _time_bin_width(timeBinWidth) {
+            build_time_bins();
         }
+
+        void bin_displacements(Lattice* lattice, ParticleType type) {
+            auto& particles = lattice->get_particles();
+
+            for(auto& particle : particles) {
+                if(particle.type != type)
+                    continue;
+
+                auto& time_list = particle.time_list;
+                auto& hop_list = particle.hop_list;
+
+                IVec3D position {0, 0, 0};
+
+                for (int i = 0; i < time_list.size(); ++i) {
+                    auto time = time_list[i];
+                    auto hop = hop_list[i];
+                    auto index = static_cast<int32_t>(floor(time * _time_bins.size() / _max_time));
+
+                    auto displacement = position.length_sq();
+                    _time_bins[index].displacement_bins.push_back(displacement);
+                    position = position + hop;
+                }
+            }
+        }
+
 
         TimeSeries get_MSD_series() {
             TimeSeries series;
 
             for (auto& time_bin : _time_bins) {
-
                 auto& displacement_bin = time_bin.displacement_bins;
 
                 if(displacement_bin.size() == 0) {
@@ -207,48 +227,23 @@ namespace Nano::KMC {
         }
 
     private:
-        void build_time_bins(double max_time, double time_bin_width) {
-            auto time_bin_count = static_cast<int32_t>(ceil(max_time / time_bin_width));
+        double _max_time;
+        double _time_bin_width;
+
+        void build_time_bins() {
+            auto time_bin_count = static_cast<int32_t>(ceil(_max_time / _time_bin_width));
             _time_bins.reserve(time_bin_count);
 
             for (int i = 0; i < time_bin_count; ++i) {
                 _time_bins.push_back({
-                    time_bin_width * i, time_bin_width * (i + 1)});
-            }
-        }
-
-        void bin_displacements(double max_time, ParticleType type) {
-            auto& particles = _lattice->get_particles();
-
-            for(auto& particle : particles) {
-                if(particle.type != type)
-                    continue;
-
-                auto& time_list = particle.time_list;
-                auto& hop_list = particle.hop_list;
-
-                IVec3D position {0, 0, 0};
-
-                for (int i = 0; i < time_list.size(); ++i) {
-                    auto time = time_list[i];
-                    auto hop = hop_list[i];
-                    auto index = static_cast<int32_t>(floor(time * _time_bins.size() / max_time));
-
-                    auto displacement = position.length_sq();
-                    _time_bins[index].displacement_bins.push_back(displacement);
-                    position = position + hop;
-                }
+                    _time_bin_width * i, _time_bin_width * (i + 1)});
             }
         }
 
         std::vector<TimeBin> _time_bins;
-        Lattice* _lattice;
     };
 
     class Simulation {
-        using VecKey = std::tuple<int32_t, int32_t, int32_t>;
-        using LocationEventMap = std::multimap<VecKey, Event>;
-
     public:
         SimulationParams params;
         Lattice* lattice;
@@ -256,17 +251,6 @@ namespace Nano::KMC {
 
         Simulation(SimulationParams params_, Lattice *lattice, RandomGenerator *randomGenerator)
         : params(std::move(params_)), lattice(lattice), random_generator(randomGenerator), _cache(lattice->size) {}
-
-        /*std::vector<double> get_event_rates() {
-            std::vector<double> rates;
-
-            for(auto& pair : _location_event_map) {
-                auto rate = pair.second.rate;
-                rates.push_back(rate);
-            }
-
-            return rates;
-        }*/
 
         void step() {
             if(_cache.empty()) {
@@ -290,7 +274,7 @@ namespace Nano::KMC {
             _time += delta_t;
         }
 
-        void multi_step(size_t count) {
+        void step(size_t count) {
             for (int i = 0; i < count; ++i) {
                 step();
             }
@@ -302,13 +286,10 @@ namespace Nano::KMC {
 
     private:
         EventCache _cache;
-
         double _time = 0.0;
 
         std::uniform_real_distribution<double> uniform_real =
                 std::uniform_real_distribution<double>(0.0, 1.0);
-
-
 
         void init_events() {
             for_all(lattice->size, [&] (IVec3D loc) {

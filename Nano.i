@@ -5,6 +5,7 @@
 #include "Native/lattice.hpp"
 #include "Native/kmc.hpp"
 #include "Native/metropolis.hpp"
+#include "Native/parallel.hpp"
 %}
 
 
@@ -13,6 +14,7 @@
 %include "Native/lattice.hpp"
 %include "Native/kmc.hpp"
 %include "Native/metropolis.hpp"
+%include "Native/parallel.hpp"
 
 %include "typemaps.i"
 %include "std_vector.i"
@@ -27,3 +29,5 @@
 %template(IntVector) std::vector<int32_t>;
 %template(DoubleVector) std::vector<double>;
 %template(IVec3DVector) std::vector<Nano::IVec3D>;
+%template(SimulationVector) std::vector<Nano::KMC::Simulation*>;
+%template(MetropolisVector) std::vector<Nano::Metropolis::Metropolis*>;

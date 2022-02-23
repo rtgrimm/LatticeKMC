@@ -6,6 +6,8 @@
 #include "kmc.hpp"
 #include "metropolis.hpp"
 
+#include "parallel.hpp"
+
 #include <set>
 #include <chrono>
 #include <random>
@@ -28,10 +30,7 @@ long clock_f(F f) {
 void run_kmc() {
     Nano::Lattice lattice(Nano::IVec3D {10, 10, 10});
 
-
-
     lattice.energy_map.set_uniform_binary(1.0, 1.0);
-
 
     Nano::RandomGenerator generator (123);
     lattice.uniform_init(generator);
@@ -58,8 +57,8 @@ void run_kmc() {
         }
     }) / step_count;
 
-    Nano::KMC::MSDEstimate msd_estimate(&lattice);
-    msd_estimate.run(simulation.get_time(), 1e-3, 1);
+    Nano::KMC::MSDEstimate msd_estimate(simulation.get_time(), 1e-3);
+    msd_estimate.bin_displacements(&lattice, 1);
     auto series = msd_estimate.get_MSD_series();
 
     std::cout << "times:" << time << std::endl;
