@@ -324,11 +324,11 @@ class MSDEstimate(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, lattice):
-        _Nano.MSDEstimate_swiginit(self, _Nano.new_MSDEstimate(lattice))
+    def __init__(self, maxTime, timeBinWidth):
+        _Nano.MSDEstimate_swiginit(self, _Nano.new_MSDEstimate(maxTime, timeBinWidth))
 
-    def run(self, max_time, time_bin_width, type):
-        return _Nano.MSDEstimate_run(self, max_time, time_bin_width, type)
+    def bin_displacements(self, lattice, type):
+        return _Nano.MSDEstimate_bin_displacements(self, lattice, type)
 
     def get_MSD_series(self):
         return _Nano.MSDEstimate_get_MSD_series(self)
@@ -347,11 +347,8 @@ class Simulation(object):
     def __init__(self, params_, lattice, randomGenerator):
         _Nano.Simulation_swiginit(self, _Nano.new_Simulation(params_, lattice, randomGenerator))
 
-    def step(self):
-        return _Nano.Simulation_step(self)
-
-    def multi_step(self, count):
-        return _Nano.Simulation_multi_step(self, count)
+    def step(self, *args):
+        return _Nano.Simulation_step(self, *args)
 
     def get_time(self):
         return _Nano.Simulation_get_time(self)
@@ -380,6 +377,12 @@ class Metropolis(object):
 # Register Metropolis in _Nano:
 _Nano.Metropolis_swigregister(Metropolis)
 
+
+def run_kmc_parallel(simulations, step_count):
+    return _Nano.run_kmc_parallel(simulations, step_count)
+
+def run_metropolis_parallel(simulations, step_count):
+    return _Nano.run_metropolis_parallel(simulations, step_count)
 class SwigPyIterator(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
 
@@ -784,6 +787,218 @@ class IVec3DVector(object):
 
 # Register IVec3DVector in _Nano:
 _Nano.IVec3DVector_swigregister(IVec3DVector)
+
+class SimulationVector(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _Nano.SimulationVector_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _Nano.SimulationVector___nonzero__(self)
+
+    def __bool__(self):
+        return _Nano.SimulationVector___bool__(self)
+
+    def __len__(self):
+        return _Nano.SimulationVector___len__(self)
+
+    def __getslice__(self, i, j):
+        return _Nano.SimulationVector___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _Nano.SimulationVector___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _Nano.SimulationVector___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _Nano.SimulationVector___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _Nano.SimulationVector___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _Nano.SimulationVector___setitem__(self, *args)
+
+    def pop(self):
+        return _Nano.SimulationVector_pop(self)
+
+    def append(self, x):
+        return _Nano.SimulationVector_append(self, x)
+
+    def empty(self):
+        return _Nano.SimulationVector_empty(self)
+
+    def size(self):
+        return _Nano.SimulationVector_size(self)
+
+    def swap(self, v):
+        return _Nano.SimulationVector_swap(self, v)
+
+    def begin(self):
+        return _Nano.SimulationVector_begin(self)
+
+    def end(self):
+        return _Nano.SimulationVector_end(self)
+
+    def rbegin(self):
+        return _Nano.SimulationVector_rbegin(self)
+
+    def rend(self):
+        return _Nano.SimulationVector_rend(self)
+
+    def clear(self):
+        return _Nano.SimulationVector_clear(self)
+
+    def get_allocator(self):
+        return _Nano.SimulationVector_get_allocator(self)
+
+    def pop_back(self):
+        return _Nano.SimulationVector_pop_back(self)
+
+    def erase(self, *args):
+        return _Nano.SimulationVector_erase(self, *args)
+
+    def __init__(self, *args):
+        _Nano.SimulationVector_swiginit(self, _Nano.new_SimulationVector(*args))
+
+    def push_back(self, x):
+        return _Nano.SimulationVector_push_back(self, x)
+
+    def front(self):
+        return _Nano.SimulationVector_front(self)
+
+    def back(self):
+        return _Nano.SimulationVector_back(self)
+
+    def assign(self, n, x):
+        return _Nano.SimulationVector_assign(self, n, x)
+
+    def resize(self, *args):
+        return _Nano.SimulationVector_resize(self, *args)
+
+    def insert(self, *args):
+        return _Nano.SimulationVector_insert(self, *args)
+
+    def reserve(self, n):
+        return _Nano.SimulationVector_reserve(self, n)
+
+    def capacity(self):
+        return _Nano.SimulationVector_capacity(self)
+    __swig_destroy__ = _Nano.delete_SimulationVector
+
+# Register SimulationVector in _Nano:
+_Nano.SimulationVector_swigregister(SimulationVector)
+
+class MetropolisVector(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def iterator(self):
+        return _Nano.MetropolisVector_iterator(self)
+    def __iter__(self):
+        return self.iterator()
+
+    def __nonzero__(self):
+        return _Nano.MetropolisVector___nonzero__(self)
+
+    def __bool__(self):
+        return _Nano.MetropolisVector___bool__(self)
+
+    def __len__(self):
+        return _Nano.MetropolisVector___len__(self)
+
+    def __getslice__(self, i, j):
+        return _Nano.MetropolisVector___getslice__(self, i, j)
+
+    def __setslice__(self, *args):
+        return _Nano.MetropolisVector___setslice__(self, *args)
+
+    def __delslice__(self, i, j):
+        return _Nano.MetropolisVector___delslice__(self, i, j)
+
+    def __delitem__(self, *args):
+        return _Nano.MetropolisVector___delitem__(self, *args)
+
+    def __getitem__(self, *args):
+        return _Nano.MetropolisVector___getitem__(self, *args)
+
+    def __setitem__(self, *args):
+        return _Nano.MetropolisVector___setitem__(self, *args)
+
+    def pop(self):
+        return _Nano.MetropolisVector_pop(self)
+
+    def append(self, x):
+        return _Nano.MetropolisVector_append(self, x)
+
+    def empty(self):
+        return _Nano.MetropolisVector_empty(self)
+
+    def size(self):
+        return _Nano.MetropolisVector_size(self)
+
+    def swap(self, v):
+        return _Nano.MetropolisVector_swap(self, v)
+
+    def begin(self):
+        return _Nano.MetropolisVector_begin(self)
+
+    def end(self):
+        return _Nano.MetropolisVector_end(self)
+
+    def rbegin(self):
+        return _Nano.MetropolisVector_rbegin(self)
+
+    def rend(self):
+        return _Nano.MetropolisVector_rend(self)
+
+    def clear(self):
+        return _Nano.MetropolisVector_clear(self)
+
+    def get_allocator(self):
+        return _Nano.MetropolisVector_get_allocator(self)
+
+    def pop_back(self):
+        return _Nano.MetropolisVector_pop_back(self)
+
+    def erase(self, *args):
+        return _Nano.MetropolisVector_erase(self, *args)
+
+    def __init__(self, *args):
+        _Nano.MetropolisVector_swiginit(self, _Nano.new_MetropolisVector(*args))
+
+    def push_back(self, x):
+        return _Nano.MetropolisVector_push_back(self, x)
+
+    def front(self):
+        return _Nano.MetropolisVector_front(self)
+
+    def back(self):
+        return _Nano.MetropolisVector_back(self)
+
+    def assign(self, n, x):
+        return _Nano.MetropolisVector_assign(self, n, x)
+
+    def resize(self, *args):
+        return _Nano.MetropolisVector_resize(self, *args)
+
+    def insert(self, *args):
+        return _Nano.MetropolisVector_insert(self, *args)
+
+    def reserve(self, n):
+        return _Nano.MetropolisVector_reserve(self, n)
+
+    def capacity(self):
+        return _Nano.MetropolisVector_capacity(self)
+    __swig_destroy__ = _Nano.delete_MetropolisVector
+
+# Register MetropolisVector in _Nano:
+_Nano.MetropolisVector_swigregister(MetropolisVector)
 
 
 

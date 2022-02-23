@@ -5,7 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(Catch_tests_run Native/tests.cpp)
 add_executable(KMC Native/main.cpp Native/lattice.hpp)
-
+target_link_libraries(KMC tbb)
+target_link_libraries(Catch_tests_run tbb)
 
 find_package(SWIG REQUIRED)
 include(UseSWIG)
@@ -25,4 +26,4 @@ swig_add_library(Nano
 
 include_directories(${SWIG_MODULE_Nano_REAL_NAME}  "./")
 target_include_directories(${SWIG_MODULE_Nano_REAL_NAME} PRIVATE ${PYTHON_INCLUDE_DIRS} "./")
-target_link_libraries(${SWIG_MODULE_Nano_REAL_NAME} PRIVATE ${PYTHON_LIBRARIES})
+target_link_libraries(${SWIG_MODULE_Nano_REAL_NAME} PRIVATE ${PYTHON_LIBRARIES} tbb)

@@ -2,15 +2,14 @@
 import ctypes
 
 import numpy as np
-from past.types import long
 
-from Nano import IntVector
-from Nano import vector_data
+from Python.Nano import IntVector
+from Python.Nano import vector_data
 from Python.Nano import DoubleVector, IVec3DVector
 
 
 def int_ptr_to_array(ptr, size):
-    addr = long(ptr)
+    addr = int(ptr)
 
     return np.copy(np.ctypeslib.as_array(
         (ctypes.c_int32 * size).from_address(addr)))
@@ -28,7 +27,7 @@ def IVec3D_to_mat(vec : IVec3DVector):
     return array
 
 def double_ptr_to_array(ptr, size):
-    addr = long(ptr)
+    addr = int(ptr)
 
     return np.copy(np.ctypeslib.as_array(
         (ctypes.c_double * size).from_address(addr)))
