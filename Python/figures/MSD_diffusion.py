@@ -12,11 +12,11 @@ from mpl_toolkits import mplot3d
 import Python.dep_graph as dg
 
 
-def run_multiplex_MSD(config_model):
+def run_multiplex_MSD(config_model, type_ = 1):
     dim = Nano.IVec3D()
     dim.x, dim.y, dim.z = (250, 250, 1)
 
-    replicate_count = 48
+    replicate_count = 16
 
     metropolis_list = []
     kmc_list = []
@@ -51,7 +51,7 @@ def run_multiplex_MSD(config_model):
     msd_estimate = Nano.MSDEstimate(max_time, bin_width)
 
     for lattice, sim in zip(lattice_list, kmc_list):
-        msd_estimate.bin_displacements(lattice, 1)
+        msd_estimate.bin_displacements(lattice, type_)
 
 
     series = msd_estimate.get_MSD_series()
@@ -62,10 +62,22 @@ def run_multiplex_MSD(config_model):
     return times, means
 
 
+def set_AV_model(lattice, T, k_b = 1.0):
+    lattice.energy_map.add_particle_type(0)
+    lattice.energy_map.add_particle_type(1)
+
+    lattice.energy_map.set_interaction(1, 0, 0.0)
+
+    lattice.energy_map.set_interaction(1, 1, 0.0)
+    lattice.energy_map.set_interaction(0, 0, 0.0)
+
+    lattice.energy_map.set_field(1, 0.0)
+    lattice.energy_map.set_field(0, 0.0)
+
+    lattice.energy_map.beta = 1 / (T * k_b)
 
 
 def MSD():
-
     time_list = []
     MSD_list = []
     param_list = []
@@ -90,23 +102,45 @@ def MSD():
 
     return time_list, MSD_list, param_list
 
+def MSD_AV():
+    times, means = run_multiplex_MSD(
+        lambda lattice: set_AV_model(lattice, 1.0)
+    )
 
+    return times, means
+
+def plot_AV_MSD(MSD_AV):
+    plt.figure(figsize=(20, 20))
+    times, means = MSD_AV
+
+    #times = np.log(times)
+    #means = np.log(means)
+
+    #line_fit_cutoff = int(len(times) * 0.1)
+   # coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
+
+    #plt.title(f"Slope of Last 10% of Points: $m = {coeff[0]}$")
+    plt.plot(times, means/times)
+    plt.ylabel("log(MSD)")
+    plt.xlabel("log(Time)")
+    #plt.savefig("MSD_AV.pdf")
+
+    plt.show()
 
 def plot_MSD(MSD):
     for power_law in [True, False]:
-        plt.figure(figsize=(32, 32))
+        plt.figure(figsize=(16, 16))
 
         time_list, MSD_list, param_list = MSD
 
         colors = pal("bright", len(MSD[0]))
-
-
 
         for times, means, params in zip(time_list, MSD_list, param_list):
             #plt.scatter(times, means, s=10.0)
             mu_v = params["mu_v"]
 
             color = next(colors)
+            labels = [f"$\mu_v = {np.round(mu_v, decimals=2)}$"]
 
             if power_law:
                 times = np.log(times)
@@ -114,9 +148,10 @@ def plot_MSD(MSD):
 
                 line_fit_cutoff = int(len(times) * 0.9)
                 coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
-                plt.plot(times, np.polyval(coeff, times), c=color)
+                #plt.plot(times, np.polyval(coeff, times), c=color)
+                labels.append(f"$\gamma = {np.round(coeff[0], decimals=2)}$")
 
-            plt.plot(times, means, label = f"$\mu_v = {mu_v}$; $m = {coeff[0]}$", c=color)
+            plt.plot(times, means, label = "; ".join(labels), c=color)
 
 
         plt.legend(frameon=False)
@@ -124,9 +159,9 @@ def plot_MSD(MSD):
         plt.xlabel("Time")
 
         if power_law:
-            plt.savefig("figures/MSD_mu_v_log_log.pdf")
+            plt.savefig("MSD_mu_v_log_log.pdf")
         else:
-            plt.savefig("figures/MSD_mu_v.pdf")
+            plt.savefig("MSD_mu_v.pdf")
 
 def plot_diffusion_const(MSD):
     plt.figure(figsize=(32, 18))
@@ -152,7 +187,7 @@ def plot_diffusion_const(MSD):
     plt.ylabel("$D$ (Line Fit)")
     plt.xlabel("$(\mu_v)^{-1}$")
 
-    plt.savefig("figures/D_mu_v.pdf")
+    plt.savefig("D_mu_v.pdf")
 
 def main():
     set_style()
@@ -162,11 +197,14 @@ def main():
     graph.register_all(map(dg.task, [
         plot_MSD,
         plot_diffusion_const,
-        MSD
+        MSD,
+        MSD_AV,
+        plot_AV_MSD
     ]))
 
     graph("plot_MSD")
     graph("plot_diffusion_const")
+    #graph("plot_AV_MSD")
 
 if __name__ == '__main__':
     main()

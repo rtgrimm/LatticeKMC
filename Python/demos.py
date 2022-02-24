@@ -20,6 +20,9 @@ def plot_point_cloud(image, key, ax, c, s = 10.0):
 
     points = np.array(points)
 
+    if(len(points) == 0):
+        return
+
     ax.set_proj_type("persp")
     ax.scatter(points[:, 0], points[:, 1], points[:, 2], s=s, color=c)
 

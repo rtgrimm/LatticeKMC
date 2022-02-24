@@ -7,6 +7,7 @@
 #include <utility>
 #include <set>
 #include <iostream>
+#include <optional>
 
 namespace Nano::KMC {
     namespace Events {
@@ -28,7 +29,6 @@ namespace Nano::KMC {
                     if(from.type == to.type) {
                         return 0.0;
                     }
-
 
                     auto E_i = lattice.site_energy(from_loc, from.type)
                                + lattice.site_energy(to_loc, to.type);
