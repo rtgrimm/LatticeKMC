@@ -274,6 +274,7 @@ namespace Nano::KMC {
             _time += delta_t;
         }
 
+
         void step(size_t count) {
             for (int i = 0; i < count; ++i) {
                 step();
@@ -331,4 +332,28 @@ namespace Nano::KMC {
             }
         }
     };
+
+    template<class S>
+    void run_temp_sweep(S* simulation, double beta_start, double beta_end, double end_time) {
+        double time = 0;
+
+        while(true) {
+            time = simulation->get_time();
+
+            auto beta = beta_start + (time / end_time) * (beta_end - beta_start);
+
+            if(time >= end_time) {
+                break;
+            }
+
+            simulation->lattice->energy_map.beta = beta;
+            simulation->step();
+        }
+    }
+
+    void run_kmc_temp_sweep(Simulation* simulation, double beta_start, double beta_end, double end_time) {
+        run_temp_sweep(simulation, beta_start, beta_end, end_time);
+    }
+
+
 }

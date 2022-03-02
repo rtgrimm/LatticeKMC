@@ -357,6 +357,9 @@ class Simulation(object):
 # Register Simulation in _Nano:
 _Nano.Simulation_swigregister(Simulation)
 
+
+def run_kmc_temp_sweep(simulation, beta_start, beta_end, end_time):
+    return _Nano.run_kmc_temp_sweep(simulation, beta_start, beta_end, end_time)
 class Metropolis(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr

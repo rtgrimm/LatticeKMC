@@ -185,6 +185,36 @@ def run_kmc_test(f, dim_):
     f(sim, lattice, dim)
 
 
+def run_thermostat_demo():
+    dim = Nano.IVec3D()
+    dim.x, dim.y, dim.z = (100, 100, 1)
+
+    T_i = 5.0
+    T_f = 0.1
+
+    lattice = Nano.Lattice(dim)
+    lattice.set_dim(Nano.LatticeDim_Two)
+
+    set_model(lattice, 2.0, 2.0, 0.1625, T_i, J_v_b=0.0, J_v_a=0.0)
+
+    gen = Nano.RandomGenerator(123)
+    lattice.uniform_init(gen)
+
+    metropolis = Nano.Metropolis(lattice, gen)
+    metropolis.step(int(1e7))
+
+    sim_params = Nano.SimulationParams()
+    sim_params.default_events()
+    sim = Nano.Simulation(sim_params, lattice, gen)
+
+
+    lattice.enable_particle_tracking()
+    Nano.run_kmc_temp_sweep(sim, 1/T_i, 1/T_f, 1e-1)
+
+    plot_lattice(dim, lattice)
+    plt.show()
+
+
 def plot_particle_data(lattice, x, y, z):
     point = Nano.IVec3D()
     point.x = x
@@ -259,6 +289,7 @@ if __name__ == '__main__':
     set_style()
     #run_kmc_test(run_point_cloud_demo, (25, 25, 25))
     #run_kmc_test(run_walk_demo, (500, 500, 1))
-    run_kmc_test(run_MSD_demo, (250, 250, 1))
+    #run_kmc_test(run_MSD_demo, (250, 250, 1))
     #run_parallel_demo()
     #run_kmc_test(run_2d_demo, (250, 250, 1))
+    run_thermostat_demo()
