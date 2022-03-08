@@ -28,40 +28,38 @@ long clock_f(F f) {
 
 
 void run_kmc() {
-    Nano::Lattice lattice(Nano::IVec3D {10, 10, 10});
+    Nano::IVec3D dim {100,100,1};
 
-    lattice.energy_map.set_uniform_binary(1.0, 1.0);
+    auto T = 0.3;
 
-    Nano::RandomGenerator generator (123);
-    lattice.uniform_init(generator);
+    auto lattice = Nano::Lattice(dim);
+    lattice.set_dim(Nano::LatticeDim::Two);
 
-    lattice.enable_particle_tracking();
+    lattice.energy_map.add_particle_type(-1);
+    lattice.energy_map.add_particle_type(1);
 
-    Nano::Metropolis::Metropolis metropolis(&lattice, &generator);
+    lattice.energy_map.set_interaction(1, -1, 1.0);
 
-    metropolis.step(1000);
+    lattice.energy_map.set_interaction(1, 1, -1.0);
+    lattice.energy_map.set_interaction(-1, -1, -1.0);
 
-    Nano::KMC::SimulationParams params;
+    lattice.energy_map.set_field(1, 0.0);
+    lattice.energy_map.set_field(-1, 0.0);
 
-    params.allowed_events.push_back(Nano::KMC::Events::Type::Swap);
+    lattice.energy_map.beta = 1 / T;
+    lattice.energy_map.allow_no_effect_move = false;
 
-    Nano::KMC::Simulation simulation(
-            params, &lattice, &generator);
+    Nano::RandomGenerator gen(123);
+    lattice.uniform_init(gen);
 
+    Nano::KMC::SimulationParams sim_params;
+    sim_params.default_events();
+    Nano::KMC::Simulation sim(sim_params, &lattice, &gen);
 
-    auto step_count = 10000;
-
-    auto time = clock_f([&] {
-        for (int i = 0; i < step_count; ++i) {
-            simulation.step();
-        }
-    }) / step_count;
-
-    Nano::KMC::MSDEstimate msd_estimate(simulation.get_time(), 1e-3);
-    msd_estimate.bin_displacements(&lattice, 1);
-    auto series = msd_estimate.get_MSD_series();
-
-    std::cout << "times:" << time << std::endl;
+    for (int i = 0; i < 100; ++i) {
+        sim.step(10000);
+        std::cout << lattice.total_energy() << std::endl;
+    }
 
 }
 

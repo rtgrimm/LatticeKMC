@@ -107,6 +107,7 @@ class EnergyMap(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
     beta = property(_Nano.EnergyMap_beta_get, _Nano.EnergyMap_beta_set)
+    allow_no_effect_move = property(_Nano.EnergyMap_allow_no_effect_move_get, _Nano.EnergyMap_allow_no_effect_move_set)
 
     def get_type_count(self):
         return _Nano.EnergyMap_get_type_count(self)
@@ -199,6 +200,12 @@ class Lattice(object):
 
     def site_energy(self, center, type):
         return _Nano.Lattice_site_energy(self, center, type)
+
+    def total_energy(self):
+        return _Nano.Lattice_total_energy(self)
+
+    def mean_magnetization(self):
+        return _Nano.Lattice_mean_magnetization(self)
 
     def uniform_init(self, random_generator):
         return _Nano.Lattice_uniform_init(self, random_generator)

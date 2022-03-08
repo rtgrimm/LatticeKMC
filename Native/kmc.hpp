@@ -1,6 +1,9 @@
 #pragma once
 
+//#define NANO_DEBUG_MODE
+
 #include "lattice.hpp"
+#include "logging.hpp"
 
 #include <map>
 #include <unordered_map>
@@ -8,6 +11,8 @@
 #include <set>
 #include <iostream>
 #include <optional>
+
+
 
 namespace Nano::KMC {
     namespace Events {
@@ -20,15 +25,30 @@ namespace Nano::KMC {
             struct Swap {
                 static void execute(Lattice& lattice, IVec3D from_loc, IVec3D to_loc, double time) {
                     lattice.swap(from_loc, to_loc, time);
+                    log(MessageType::Info, "Executing swap with delta E " +
+                        std::to_string(calc_delta_E(lattice, from_loc, to_loc)));
                 }
 
                 static double rate(Lattice& lattice, IVec3D from_loc, IVec3D to_loc, double time) {
                     auto from = lattice.particle_at(from_loc);
                     auto to = lattice.particle_at(to_loc);
 
-                    if(from.type == to.type) {
+                    if(from.type == to.type && !lattice.energy_map.allow_no_effect_move) {
                         return 0.0;
                     }
+
+                    double delta_E = calc_delta_E(lattice, from_loc, to_loc);
+
+                    if(delta_E >= 0) {
+                        return std::exp(-delta_E * lattice.energy_map.beta);
+                    } else {
+                        return 1.0;
+                    }
+                }
+
+                static double calc_delta_E(Lattice &lattice, IVec3D &from_loc, IVec3D &to_loc) {
+                    auto from = lattice.particle_at(from_loc);
+                    auto to = lattice.particle_at(to_loc);
 
                     auto E_i = lattice.site_energy(from_loc, from.type)
                                + lattice.site_energy(to_loc, to.type);
@@ -37,12 +57,7 @@ namespace Nano::KMC {
                                + lattice.site_energy(to_loc, from.type);
 
                     auto delta_E = E_f - E_i;
-
-                    if(delta_E > 0) {
-                        return std::exp(-delta_E * lattice.energy_map.beta);
-                    } else {
-                        return 1.0;
-                    }
+                    return delta_E;
                 }
             };
 
@@ -104,18 +119,18 @@ namespace Nano::KMC {
             auto key = std::make_tuple(
                     event.rate, static_cast<int32_t>(event_list.size()));
 
-            _group_map[event.rate].push_back(event);
-            _id_map.get(event.center).push_back(key);
+            event_list.push_back(event);
+            _id_map.get(event.center).insert(key);
         }
 
         void clear_location(IVec3D center) {
-            auto& elements = _id_map.get(center);
+            auto elements = _id_map.get(center);
 
             for(auto& key : elements) {
                 erase_from_group_map(key);
             }
 
-            elements.clear();
+            _id_map.get(center).clear();
         }
 
         std::tuple<Event, double> choose_event(RandomGenerator& generator) {
@@ -129,20 +144,26 @@ namespace Nano::KMC {
             auto r_1 = uniform_real(generator.gen) * rate_total;
             
             std::vector<Event>* event_list = &(--std::end(_group_map))->second;
+            double selected_rate = 0.0;
             
             for(auto& [rate, list] : _group_map) {
                 partial_sum += rate * static_cast<double>(list.size());
 
                 if(partial_sum > r_1) {
                     event_list = &list;
+                    selected_rate = rate;
                     break;
                 }
             }
+
+            log(MessageType::Info, "Selecting event group with rate " + std::to_string(selected_rate));
 
             std::uniform_int_distribution<size_t> uniform_index(0, event_list->size() - 1);
             
             auto index = uniform_index(generator.gen);
             auto event = (*event_list)[index];
+
+            log(MessageType::Info, "Selecting event with index " + std::to_string(index));
 
             return std::make_tuple(event, rate_total);
         }
@@ -152,12 +173,25 @@ namespace Nano::KMC {
                 std::uniform_real_distribution<double>(0.0, 1.0);
         
         void erase_from_group_map(Key key) {
-            auto& event_list = _group_map[std::get<0>(key)];
-            event_list[std::get<1>(key)] = *(std::end(event_list) - 1);
+            double group_key = std::get<0>(key);
+            auto& event_list = _group_map[group_key];
+
+            auto old_index = event_list.size() - 1;
+            auto new_index = std::get<1>(key);
+
+            event_list[new_index] = event_list[old_index];
             event_list.pop_back();
+
+            auto& swapped_event = event_list[new_index];
+
+            _id_map.get(swapped_event.center)
+                .erase(std::make_tuple(group_key, old_index));
+
+            _id_map.get(swapped_event.center)
+                .insert(std::make_tuple(group_key, new_index));
         }
 
-        Tensor<std::vector<std::tuple<GroupId, EventId>>> _id_map;
+        Tensor<std::set<std::tuple<GroupId, EventId>>> _id_map;
         std::map<GroupId, std::vector<Event>> _group_map;
     };
 
@@ -262,6 +296,8 @@ namespace Nano::KMC {
             Events::Dispatch::execute(selected_event.type, *lattice,
                             selected_event.center, selected_event.target, _time);
 
+
+
             update_surrounding_events(
                     selected_event.center, selected_event.target);
 
@@ -277,6 +313,9 @@ namespace Nano::KMC {
 
         void step(size_t count) {
             for (int i = 0; i < count; ++i) {
+                if (i % 100000 == 0) {
+                    std::cout << (static_cast<float>(i) / static_cast<float>(count)) * 100.0 << std::endl;
+                }
                 step();
             }
         }

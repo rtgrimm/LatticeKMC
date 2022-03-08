@@ -206,13 +206,62 @@ def run_thermostat_demo():
     sim_params = Nano.SimulationParams()
     sim_params.default_events()
     sim = Nano.Simulation(sim_params, lattice, gen)
-
-
     lattice.enable_particle_tracking()
-    Nano.run_kmc_temp_sweep(sim, 1/T_i, 1/T_f, 1e-1)
 
+    plt.figure()
+
+    plt.subplot(1, 2, 1)
+    plt.title("Before KMC Quench")
     plot_lattice(dim, lattice)
+    plt.axis("off")
+
+    plt.subplot(1, 2, 2)
+    plt.title("After KMC Quench")
+    Nano.run_kmc_temp_sweep(sim, 1/T_i, 1/T_f, 1e-1)
+    plot_lattice(dim, lattice)
+    plt.axis("off")
+
     plt.show()
+
+def run_live_kmc_demo():
+    dim = Nano.IVec3D()
+    dim.x, dim.y, dim.z = (50, 50, 1)
+
+    T = 0.3
+
+    lattice = Nano.Lattice(dim)
+    lattice.set_dim(Nano.LatticeDim_Two)
+
+    lattice.energy_map.add_particle_type(-1)
+    lattice.energy_map.add_particle_type(1)
+
+    lattice.energy_map.set_interaction(1, -1, 1.0)
+
+    lattice.energy_map.set_interaction(1, 1, -1.0)
+    lattice.energy_map.set_interaction(-1, -1, -1.0)
+
+    lattice.energy_map.set_field(1, 0.0)
+    lattice.energy_map.set_field(-1, 0.0)
+
+    lattice.energy_map.beta = 1 / T
+
+    gen = Nano.RandomGenerator(125)
+    lattice.uniform_init(gen)
+
+    metropolis = Nano.Metropolis(lattice, gen)
+    metropolis.step(int(1e7))
+
+    sim_params = Nano.SimulationParams()
+    sim_params.default_events()
+    sim = Nano.Simulation(sim_params, lattice, gen)
+
+    plt.ion()
+
+    while True:
+        plot_lattice(dim, lattice)
+        metropolis.step(int(1e2))
+        plt.draw()
+        plt.pause(1e-9)
 
 
 def plot_particle_data(lattice, x, y, z):
@@ -292,4 +341,5 @@ if __name__ == '__main__':
     #run_kmc_test(run_MSD_demo, (250, 250, 1))
     #run_parallel_demo()
     #run_kmc_test(run_2d_demo, (250, 250, 1))
-    run_thermostat_demo()
+    #run_thermostat_demo()
+    run_live_kmc_demo()

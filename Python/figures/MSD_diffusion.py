@@ -12,11 +12,11 @@ from mpl_toolkits import mplot3d
 import Python.dep_graph as dg
 
 
-def run_multiplex_MSD(config_model, type_ = 1):
+def run_multiplex_MSD(config_model, type_ = 1, run_metro = True, allow_no_effect = False):
     dim = Nano.IVec3D()
     dim.x, dim.y, dim.z = (250, 250, 1)
 
-    replicate_count = 16
+    replicate_count = 48
 
     metropolis_list = []
     kmc_list = []
@@ -27,6 +27,7 @@ def run_multiplex_MSD(config_model, type_ = 1):
         lattice = Nano.Lattice(dim)
         lattice.set_dim(Nano.LatticeDim_Two)
         lattice.enable_particle_tracking()
+        lattice.allow_no_effect_move = allow_no_effect
 
         config_model(lattice)
 
@@ -43,8 +44,10 @@ def run_multiplex_MSD(config_model, type_ = 1):
         sim = Nano.Simulation(sim_params, lattice, gen)
         kmc_list.append(sim)
 
-    Nano.run_metropolis_parallel(MetropolisVector(metropolis_list), int(1e7))
-    Nano.run_kmc_parallel(SimulationVector(kmc_list), int(1e6))
+    if run_metro:
+        Nano.run_metropolis_parallel(MetropolisVector(metropolis_list), int(1e6))
+
+    Nano.run_kmc_parallel(SimulationVector(kmc_list), int(1e7))
 
     max_time = np.max([sim.get_time() for sim in kmc_list])
     bin_width = 1e-1
@@ -93,7 +96,7 @@ def MSD():
 
         times, means = run_multiplex_MSD(
             lambda lattice: set_model(
-                lattice, 2.0, 2.0, mu_v = config["mu_v"], T = 0.55)
+                lattice, 2.0, 2.0, mu_v = config["mu_v"], T = 0.55), allow_no_effect=True
         )
 
         time_list.append(times)
@@ -104,8 +107,9 @@ def MSD():
 
 def MSD_AV():
     times, means = run_multiplex_MSD(
-        lambda lattice: set_AV_model(lattice, 1.0)
-    )
+        lambda lattice: set_AV_model(lattice, 1.0),
+        run_metro=False,
+        allow_no_effect=True)
 
     return times, means
 
@@ -113,16 +117,19 @@ def plot_AV_MSD(MSD_AV):
     plt.figure(figsize=(20, 20))
     times, means = MSD_AV
 
-    #times = np.log(times)
-    #means = np.log(means)
+    if False:
+        times = np.log(times)
+        means = np.log(means)
 
-    #line_fit_cutoff = int(len(times) * 0.1)
-   # coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
+        line_fit_cutoff = int(len(times) * 0.1)
+        coeff = np.polyfit(times[-line_fit_cutoff:], means[-line_fit_cutoff:], deg=1)
 
-    #plt.title(f"Slope of Last 10% of Points: $m = {coeff[0]}$")
-    plt.plot(times, means/times)
-    plt.ylabel("log(MSD)")
-    plt.xlabel("log(Time)")
+        plt.title(f"Slope of Last 10% of Points: $m = {coeff[0]}$; D = ${np.exp(coeff[1])}$")
+
+
+    plt.plot(times, means / times)
+    plt.ylabel("MSD")
+    plt.xlabel("MSD / Time")
     #plt.savefig("MSD_AV.pdf")
 
     plt.show()
@@ -202,9 +209,9 @@ def main():
         plot_AV_MSD
     ]))
 
-    graph("plot_MSD")
-    graph("plot_diffusion_const")
-    #graph("plot_AV_MSD")
+    #graph("plot_MSD")
+    #graph("plot_diffusion_const")
+    graph("plot_AV_MSD")
 
 if __name__ == '__main__':
     main()

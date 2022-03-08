@@ -12,6 +12,7 @@ namespace Nano {
     class EnergyMap {
     public:
         double beta = 1.0;
+        bool allow_no_effect_move = false;
 
         size_t get_type_count() const {
             return _types.size();
@@ -147,6 +148,26 @@ namespace Nano {
             });
 
             return energy;
+        }
+
+        double total_energy() {
+            double total = 0.0;
+
+            for_all(size,[&] (IVec3D loc) {
+                total += site_energy(loc, particle_at(loc).type);
+            });
+
+            return total;
+        }
+
+        double mean_magnetization() {
+            double total = 0.0;
+
+            for_all(size,[&] (IVec3D loc) {
+                total += static_cast<double>(particle_at(loc).type);
+            });
+
+            return total / size.V();
         }
 
         template<class F>
