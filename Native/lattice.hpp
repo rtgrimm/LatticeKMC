@@ -12,6 +12,7 @@ namespace Nano {
     class EnergyMap {
     public:
         double beta = 1.0;
+        bool allow_no_effect_move = false;
 
         size_t get_type_count() const {
             return _types.size();
@@ -62,6 +63,10 @@ namespace Nano {
             _field[i] = B;
         }
 
+        const std::vector<ParticleType>& types() const {
+            return _types;
+        }
+
     private:
         std::map<std::tuple<ParticleType, ParticleType>, double> _interactions;
         std::map<ParticleType, double> _field;
@@ -104,12 +109,18 @@ namespace Nano {
             _dim = dim;
         }
 
+
+
         explicit Lattice(IVec3D size_) :
             size(size_), _particle_map(size_, Particle::invalid_particle) {}
 
         Particle& particle_at(IVec3D loc) {
             auto index = _particle_map.get(loc);
             return _particles[index];
+        }
+
+        void save_state() {
+            _history.push_back(get_types());
         }
 
         void swap(IVec3D from_loc, IVec3D to_loc, double time) {
@@ -147,6 +158,26 @@ namespace Nano {
             });
 
             return energy;
+        }
+
+        double total_energy() {
+            double total = 0.0;
+
+            for_all(size,[&] (IVec3D loc) {
+                total += site_energy(loc, particle_at(loc).type);
+            });
+
+            return total;
+        }
+
+        double mean_magnetization() {
+            double total = 0.0;
+
+            for_all(size,[&] (IVec3D loc) {
+                total += static_cast<double>(particle_at(loc).type);
+            });
+
+            return total / size.V();
         }
 
         template<class F>
@@ -187,6 +218,17 @@ namespace Nano {
             });
         }
 
+        void array_init(const std::vector<int32_t>& values) {
+            auto value_map = Tensor<int32_t>(size, values);
+
+            init([&] (IVec3D loc) {
+                std::uniform_int_distribution<int32_t> type_random (
+                        0, static_cast<int32_t>(energy_map.get_type_count()) - 1);
+
+                return value_map.get(loc);
+            });
+        }
+
         std::vector<int32_t> get_types() {
             std::vector<int32_t> types;
 
@@ -201,7 +243,13 @@ namespace Nano {
             return _particles;
         }
 
+        const std::vector<std::vector<int32_t>>& get_history() const {
+            return _history;
+        }
+
     private:
+        std::vector<std::vector<int32_t>> _history;
+
         bool _particle_tracking_enabled = false;
         std::vector<Particle> _particles;
         Tensor<int32_t> _particle_map;

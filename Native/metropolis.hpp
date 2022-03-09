@@ -33,6 +33,7 @@ namespace Nano::Metropolis {
 
         void step(size_t steps = 1) {
             for (int step = 0; step < steps; ++step) {
+                lattice->save_state();
                 static_step();
             }
         }

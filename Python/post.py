@@ -1,7 +1,7 @@
 from shutil import copyfile
 
 
-src = "../cmake-build-release/"
+src = "../cmake-build-debug/"
 dst = "../Python/"
 
 files = [
