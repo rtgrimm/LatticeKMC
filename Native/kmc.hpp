@@ -207,6 +207,7 @@ namespace Nano::KMC {
         std::vector<double> values;
     };
 
+
     class MSDEstimate {
     public:
         MSDEstimate(double maxTime, double timeBinWidth) : _max_time(maxTime), _time_bin_width(timeBinWidth) {
@@ -291,6 +292,8 @@ namespace Nano::KMC {
                 init_events();
             }
 
+            lattice->save_state();
+
             auto [selected_event, k_total] = _cache.choose_event(*random_generator);
 
             Events::Dispatch::execute(selected_event.type, *lattice,
@@ -371,6 +374,43 @@ namespace Nano::KMC {
             }
         }
     };
+
+    class OccupancyEstimate {
+    public:
+        explicit OccupancyEstimate(IVec3D dim, EnergyMap& map)  {
+            auto types = map.types();
+            _min_type = *std::min(std::begin(types), std::end(types));
+
+            for (int i = 0; i < types.size(); ++i) {
+                _counts.emplace_back(dim);
+            }
+        }
+
+
+        std::vector<int32_t> get_count_raw(ParticleType particle_type) {
+            return _counts[particle_type - _min_type].raw();
+        }
+
+        void add_particles(Lattice* lattice) {
+            auto& history = lattice->get_history();
+
+            for_all(lattice->size, [&] (IVec3D& loc) {
+                auto index = to_index(loc, lattice->size);
+
+                for(auto& step : history) {
+                    auto type = step[index];
+                    auto& tensor = _counts[type - _min_type];
+
+                    tensor.set(loc, tensor.get(loc) + 1);
+                }
+            });
+        }
+
+    private:
+        std::vector<Tensor<int32_t>> _counts;
+        int32_t _min_type = 0;
+    };
+
 
     template<class S>
     void run_temp_sweep(S* simulation, double beta_start, double beta_end, double end_time) {

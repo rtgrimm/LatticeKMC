@@ -70,6 +70,10 @@ namespace Nano {
         }
     };
 
+    int32_t to_index(IVec3D location, IVec3D size) {
+        return location.x + location.y * size.x + location.z * size.x * size.y;
+    }
+
     template<class F>
     void for_all(IVec3D vec, F f) {
         for (int i = 0; i < vec.x; ++i) {
@@ -111,6 +115,9 @@ namespace Nano {
             std::fill(std::begin(_items), std::end(_items), start_value);
         }
 
+        explicit Tensor(IVec3D size, std::vector<T> values)
+            : _items(std::move(values)), size(size) { }
+
         T& get(IVec3D location) {
             return _items[get_index(location)];
         }
@@ -129,7 +136,7 @@ namespace Nano {
                 location = location.wrap(size);
             }
 
-            return location.x + location.y * size.x + location.z * size.x * size.y;
+            return to_index(location, size);
         }
 
         std::vector<T> _items;

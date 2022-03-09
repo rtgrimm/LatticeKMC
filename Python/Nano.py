@@ -136,6 +136,9 @@ class EnergyMap(object):
     def set_field(self, i, B):
         return _Nano.EnergyMap_set_field(self, i, B)
 
+    def types(self):
+        return _Nano.EnergyMap_types(self)
+
     def __init__(self):
         _Nano.EnergyMap_swiginit(self, _Nano.new_EnergyMap())
     __swig_destroy__ = _Nano.delete_EnergyMap
@@ -209,6 +212,9 @@ class Lattice(object):
 
     def uniform_init(self, random_generator):
         return _Nano.Lattice_uniform_init(self, random_generator)
+
+    def array_init(self, values):
+        return _Nano.Lattice_array_init(self, values)
 
     def get_types(self):
         return _Nano.Lattice_get_types(self)
@@ -363,6 +369,26 @@ class Simulation(object):
 
 # Register Simulation in _Nano:
 _Nano.Simulation_swigregister(Simulation)
+
+class OccupancyEstimate(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+
+    def __init__(self, dim, map):
+        _Nano.OccupancyEstimate_swiginit(self, _Nano.new_OccupancyEstimate(dim, map))
+
+    def run_KMC(self, simulation, lattice, steps):
+        return _Nano.OccupancyEstimate_run_KMC(self, simulation, lattice, steps)
+
+    def get_count_raw(self, particle_type):
+        return _Nano.OccupancyEstimate_get_count_raw(self, particle_type)
+
+    def add_particles(self, lattice):
+        return _Nano.OccupancyEstimate_add_particles(self, lattice)
+    __swig_destroy__ = _Nano.delete_OccupancyEstimate
+
+# Register OccupancyEstimate in _Nano:
+_Nano.OccupancyEstimate_swigregister(OccupancyEstimate)
 
 
 def run_kmc_temp_sweep(simulation, beta_start, beta_end, end_time):

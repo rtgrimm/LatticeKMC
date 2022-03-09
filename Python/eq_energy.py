@@ -3,8 +3,48 @@ from wrap import int_vec_to_mat
 import matplotlib.pyplot as plt
 import Nano
 
+def main_2():
+    dim = Nano.IVec3D()
+    dim.x, dim.y, dim.z = (100, 1, 1)
 
-def main():
+    T = 0.3
+
+    lattice = Nano.Lattice(dim)
+    lattice.set_dim(Nano.LatticeDim_One)
+
+    lattice.energy_map.add_particle_type(-1)
+    lattice.energy_map.add_particle_type(1)
+
+    lattice.energy_map.set_interaction(1, -1, 1.0)
+
+    lattice.energy_map.set_interaction(1, 1, -1.0)
+    lattice.energy_map.set_interaction(-1, -1, -1.0)
+
+    lattice.energy_map.set_field(1, 0.0)
+    lattice.energy_map.set_field(-1, 0.0)
+
+    lattice.energy_map.beta = 1 / T
+    lattice.energy_map.allow_no_effect_move = True
+
+    gen = Nano.RandomGenerator(123)
+    lattice.uniform_init(gen)
+
+    metropolis = Nano.Metropolis(lattice, gen)
+    #metropolis.step(int(1e7))
+
+    sim_params = Nano.SimulationParams()
+    sim_params.default_events()
+    sim = Nano.Simulation(sim_params, lattice, gen)
+
+    occ_est = Nano.OccupancyEstimate(dim, lattice.energy_map)
+    occ_est.run_KMC(sim, lattice, int(1e6))
+
+    A_counts = occ_est.get_count_raw(1)
+
+    plt.stem(A_counts)
+    plt.show()
+
+def main_1():
     dim = Nano.IVec3D()
     dim.x, dim.y, dim.z = (100, 100, 1)
 
@@ -65,4 +105,4 @@ def main():
         plt.pause(1e-9)
 
 if __name__ == '__main__':
-    main()
+    main_2()
