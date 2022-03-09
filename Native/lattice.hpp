@@ -105,6 +105,14 @@ namespace Nano {
             _particle_tracking_enabled = false;
         }
 
+        void enable_grid_tracking() {
+            _grid_tracking_enabled = true;
+        }
+
+        void disable_grid_tracking() {
+            _grid_tracking_enabled = false;
+        }
+
         void set_dim(LatticeDim dim) {
             _dim = dim;
         }
@@ -119,8 +127,11 @@ namespace Nano {
             return _particles[index];
         }
 
-        void save_state() {
-            _history.push_back(get_types());
+        void save_state(double time) {
+            if(_grid_tracking_enabled) {
+                _history.push_back(get_types());
+                _times.push_back(time);
+            }
         }
 
         void swap(IVec3D from_loc, IVec3D to_loc, double time) {
@@ -191,6 +202,11 @@ namespace Nano {
             }
         }
 
+        void clear_history() {
+            _history.clear();
+            _times.clear();
+        }
+
         template<class F>
         void init(F f) {
             int32_t particle_id = 0;
@@ -247,10 +263,16 @@ namespace Nano {
             return _history;
         }
 
+        const std::vector<double>& get_times() const {
+            return _times;
+        }
+
     private:
         std::vector<std::vector<int32_t>> _history;
+        std::vector<double> _times;
 
         bool _particle_tracking_enabled = false;
+        bool _grid_tracking_enabled = false;
         std::vector<Particle> _particles;
         Tensor<int32_t> _particle_map;
         LatticeDim _dim = LatticeDim::Three;

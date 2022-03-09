@@ -3,9 +3,7 @@ import ctypes
 
 import numpy as np
 
-from Python.Nano import IntVector
-from Python.Nano import vector_data
-from Python.Nano import DoubleVector, IVec3DVector
+from Python.Nano import *
 
 
 def int_ptr_to_array(ptr, size):

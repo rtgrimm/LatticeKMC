@@ -3,7 +3,7 @@ import os
 import numpy as np
 
 from Python.Nano import IntVector
-from Python.wrap import int_vec_to_mat
+from Python.wrap import int_vec_to_mat, double_vec_to_mat
 import matplotlib.pyplot as plt
 import Python.Nano as Nano
 
@@ -31,37 +31,76 @@ def set_lattice(lattice):
 
 def main():
     dim = Nano.IVec3D()
-    dim.x, dim.y, dim.z = (201, 1, 1)
+    dim.x, dim.y, dim.z = (300, 1, 1)
 
-    lattice = Nano.Lattice(dim)
-    set_lattice(lattice)
 
-    replicate_count = 64
 
-    metropolis_list = []
+    replicate_count = 16
+
+    sim_list = []
     lattice_list = []
     gen_list = []
 
     for i in range(0, replicate_count):
-        gen = Nano.RandomGenerator(123)
+        lattice = Nano.Lattice(dim)
+        set_lattice(lattice)
+
+        gen = Nano.RandomGenerator(i)
 
         values = np.zeros(dim.x, dtype=int)
-        values[100] = 1
+        values[150] = 1
 
         array = IntVector(values.tolist())
         lattice.array_init(array)
+
+        #lattice.uniform_init(gen)
+        lattice.enable_grid_tracking()
 
         sim_params = Nano.SimulationParams()
         sim_params.default_events()
         sim = Nano.Simulation(sim_params, lattice, gen)
 
-    occ_est = Nano.OccupancyEstimate(dim, lattice.energy_map)
-    occ_est.run_KMC(sim, lattice, int(1e5))
+        sim_list.append(sim)
+        lattice_list.append(lattice)
+        gen_list.append(gen)
 
-    A_counts = occ_est.get_count_raw(1)
 
-    plt.stem(A_counts)
-    plt.show()
+
+    sim_list_ = Nano.SimulationVector(sim_list)
+
+    occ_est = Nano.OccupancyEstimate(10000000.0, 10000000.0, dim, 1)
+
+    plt.figure()
+    while True:
+        Nano.run_kmc_parallel(sim_list_, int(1e4))
+
+        max_time = np.max([sim.get_time() for sim in sim_list_])
+
+
+
+
+        for lattice in lattice_list:
+            occ_est.add_particles(lattice)
+            lattice.clear_history()
+
+        bins = double_vec_to_mat(occ_est.get_bins_raw())
+        times = double_vec_to_mat(occ_est.get_times())
+
+        bin_count = len(times)
+
+        bin_grid = np.reshape(bins, newshape=(bin_count, dim.x))
+
+
+        plt.ion()
+        for row in bin_grid:
+            plt.clf()
+            plt.stem(row)
+
+        plt.draw()
+        plt.pause(1e-9)
+
+
+
 
 if __name__ == '__main__':
     main()

@@ -101,6 +101,9 @@ class IVec3D(object):
 _Nano.IVec3D_swigregister(IVec3D)
 
 
+def to_index(location, size):
+    return _Nano.to_index(location, size)
+
 def vector_data(*args):
     return _Nano.vector_data(*args)
 class EnergyMap(object):
@@ -189,6 +192,12 @@ class Lattice(object):
     def disable_particle_tracking(self):
         return _Nano.Lattice_disable_particle_tracking(self)
 
+    def enable_grid_tracking(self):
+        return _Nano.Lattice_enable_grid_tracking(self)
+
+    def disable_grid_tracking(self):
+        return _Nano.Lattice_disable_grid_tracking(self)
+
     def set_dim(self, dim):
         return _Nano.Lattice_set_dim(self, dim)
 
@@ -197,6 +206,9 @@ class Lattice(object):
 
     def particle_at(self, loc):
         return _Nano.Lattice_particle_at(self, loc)
+
+    def save_state(self, time):
+        return _Nano.Lattice_save_state(self, time)
 
     def swap(self, from_loc, to_loc, time):
         return _Nano.Lattice_swap(self, from_loc, to_loc, time)
@@ -210,6 +222,9 @@ class Lattice(object):
     def mean_magnetization(self):
         return _Nano.Lattice_mean_magnetization(self)
 
+    def clear_history(self):
+        return _Nano.Lattice_clear_history(self)
+
     def uniform_init(self, random_generator):
         return _Nano.Lattice_uniform_init(self, random_generator)
 
@@ -221,6 +236,12 @@ class Lattice(object):
 
     def get_particles(self):
         return _Nano.Lattice_get_particles(self)
+
+    def get_history(self):
+        return _Nano.Lattice_get_history(self)
+
+    def get_times(self):
+        return _Nano.Lattice_get_times(self)
     __swig_destroy__ = _Nano.delete_Lattice
 
 # Register Lattice in _Nano:
@@ -306,6 +327,26 @@ class EventCache(object):
 # Register EventCache in _Nano:
 _Nano.EventCache_swigregister(EventCache)
 
+class Simulation(object):
+    thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
+    __repr__ = _swig_repr
+    params = property(_Nano.Simulation_params_get, _Nano.Simulation_params_set)
+    lattice = property(_Nano.Simulation_lattice_get, _Nano.Simulation_lattice_set)
+    random_generator = property(_Nano.Simulation_random_generator_get, _Nano.Simulation_random_generator_set)
+
+    def __init__(self, params_, lattice, randomGenerator):
+        _Nano.Simulation_swiginit(self, _Nano.new_Simulation(params_, lattice, randomGenerator))
+
+    def step(self, *args):
+        return _Nano.Simulation_step(self, *args)
+
+    def get_time(self):
+        return _Nano.Simulation_get_time(self)
+    __swig_destroy__ = _Nano.delete_Simulation
+
+# Register Simulation in _Nano:
+_Nano.Simulation_swigregister(Simulation)
+
 class TimeBin(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
@@ -350,38 +391,34 @@ class MSDEstimate(object):
 # Register MSDEstimate in _Nano:
 _Nano.MSDEstimate_swigregister(MSDEstimate)
 
-class Simulation(object):
+class GridSeries(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
-    params = property(_Nano.Simulation_params_get, _Nano.Simulation_params_set)
-    lattice = property(_Nano.Simulation_lattice_get, _Nano.Simulation_lattice_set)
-    random_generator = property(_Nano.Simulation_random_generator_get, _Nano.Simulation_random_generator_set)
+    times = property(_Nano.GridSeries_times_get, _Nano.GridSeries_times_set)
+    values = property(_Nano.GridSeries_values_get, _Nano.GridSeries_values_set)
 
-    def __init__(self, params_, lattice, randomGenerator):
-        _Nano.Simulation_swiginit(self, _Nano.new_Simulation(params_, lattice, randomGenerator))
+    def __init__(self):
+        _Nano.GridSeries_swiginit(self, _Nano.new_GridSeries())
+    __swig_destroy__ = _Nano.delete_GridSeries
 
-    def step(self, *args):
-        return _Nano.Simulation_step(self, *args)
-
-    def get_time(self):
-        return _Nano.Simulation_get_time(self)
-    __swig_destroy__ = _Nano.delete_Simulation
-
-# Register Simulation in _Nano:
-_Nano.Simulation_swigregister(Simulation)
+# Register GridSeries in _Nano:
+_Nano.GridSeries_swigregister(GridSeries)
 
 class OccupancyEstimate(object):
     thisown = property(lambda x: x.this.own(), lambda x, v: x.this.own(v), doc="The membership flag")
     __repr__ = _swig_repr
 
-    def __init__(self, dim, map):
-        _Nano.OccupancyEstimate_swiginit(self, _Nano.new_OccupancyEstimate(dim, map))
+    def __init__(self, maxTime, timeBinWidth, size, particle_type):
+        _Nano.OccupancyEstimate_swiginit(self, _Nano.new_OccupancyEstimate(maxTime, timeBinWidth, size, particle_type))
 
-    def run_KMC(self, simulation, lattice, steps):
-        return _Nano.OccupancyEstimate_run_KMC(self, simulation, lattice, steps)
+    def get_bins_raw(self):
+        return _Nano.OccupancyEstimate_get_bins_raw(self)
 
-    def get_count_raw(self, particle_type):
-        return _Nano.OccupancyEstimate_get_count_raw(self, particle_type)
+    def get_bins(self):
+        return _Nano.OccupancyEstimate_get_bins(self)
+
+    def get_times(self):
+        return _Nano.OccupancyEstimate_get_times(self)
 
     def add_particles(self, lattice):
         return _Nano.OccupancyEstimate_add_particles(self, lattice)
